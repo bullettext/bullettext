@@ -1,6 +1,6 @@
 # Bold 
 
-##Instalation process
+### Instalation process
 
 - clone this repository
 - composer update
@@ -15,7 +15,7 @@ Login: admin@admin.com
 Password: admin
 
 
-##Development 
+### Development 
 
 Vue files are on the /frontend folder
 
