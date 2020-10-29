@@ -1,0 +1,64 @@
+body {
+	font-size:16px;
+	line-height:1.2;
+
+}
+*, *:after, *:before { box-sizing: border-box; }
+
+
+.blocks p { margin:0;}
+
+.vanilla p { margin:0;}
+
+.checkbox { width:15px; height:15px; display:inline-block; margin-right:3px; color: #000;}
+.checkbox:before { content:'☐';  }
+.checkbox.checked { }
+.checkbox.checked:before { content:'☑';  }
+textarea {
+    /* position:absolute; */
+    /* top:0; */
+    /* left:0; */
+    width: 100%;
+    height: 1.5em;
+    border:0;
+    outline:none;
+    overflow: hidden;
+    resize:none;
+    display: block;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    line-height:inherit;
+    background:#f9f9f9;
+    padding:0 4px;
+}
+
+span.calculate {
+	position:fixed;
+	top:0;
+	left:0;
+	display:inline-block;
+	min-height: 1.5em;
+	padding: 0 4px;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+	cursor: text;
+	margin:0;
+}
+span.calculate #carret { display:inline-block; }
+span.calculate #carret:after { content:' '; }
+
+.block-content{
+    position:relative;
+}
+p { min-height:1.5em; padding:0 4px;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    cursor:text;
+}
+textarea + p { display:none; }
+
+/* textarea:focus { outline:.1px solid #ff0000;} */
+
+@media(min-width:992px){.is-mobile{ display:none !important; }}
+@media(max-width:991px){.is-desktop{ display:none !important; }}
