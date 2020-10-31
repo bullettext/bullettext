@@ -33,12 +33,14 @@ OK new block get temporary id
 OK save function
 OK - replace temporary id with real id
 
+
+OK fix delete when next block has children
+
+
+
 ctrl+z
 
-fix delete when next block has children
-
 fix when moving up or down, consider identation to keep cursor in the  same position
-
 
 [[]] to create a new block
 	list blocks

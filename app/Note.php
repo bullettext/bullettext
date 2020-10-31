@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+use Str;
+use Auth;
+
 class Note extends Model
 {
     //
@@ -23,6 +26,30 @@ class Note extends Model
 
 	public function blocks(){
 		return $this->hasMany('\App\Block')->orderBy('order');
+	}
+
+	public function references(){
+		return $this->belongsToMany('\App\Block','references','note_id','block_id');
+	}
+
+	protected static function boot() {
+		parent::boot();
+
+		Note::saving(function($model){
+
+        $user_id = Auth::user()->id;
+
+        $slug = Str::slug($model->name);
+
+        $add = 0;
+        $slug_final = $slug;
+        while(\App\Note::where('user_id',$user_id)->where('slug',$slug_final)->count()) {
+            $slug_final = $slug.'-'.(++$add);
+        }
+				$model->slug = $slug_final;
+				return $model;
+
+		});
 	}
 
 }

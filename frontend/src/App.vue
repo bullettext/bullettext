@@ -27,8 +27,7 @@ export default {
 	},
 	computed:{
 		isAuthenticated:function(){
-		console.log('this.$store.getters.isAuthenticated',this.$store.getters.isAuthenticated);
-		return this.$store.getters.isAuthenticated
+			return this.$store.getters.isAuthenticated
 		},
 		editingBlockId(){
 			return this.$store.state.editingBlockId;
@@ -37,16 +36,9 @@ export default {
 	methods:{
 
 	},
-	mounted(){
-
-	}
 
 }
 
 
 
 </script>
-
-<style>
-
-</style>

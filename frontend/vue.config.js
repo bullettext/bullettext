@@ -14,7 +14,7 @@
   module.exports = {
 
     devServer: {
-      proxy: 'http://localhost.roamcopy/',
+      proxy: 'http://localhost.boldjournaling.com/',
     },
 
     indexPath: '../resources/views/index.php',

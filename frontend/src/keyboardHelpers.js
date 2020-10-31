@@ -95,26 +95,21 @@ window.handleKeyArrowDown = function(e){
 window.handleKeyEnter = function(e){
 	e.preventDefault();
 	var textarea = e.target;
-	var text = textarea.value;
-	textarea.value = text.substr(0,textarea.selectionStart).trim();
-
 	var block = textarea.closest('[data-block]');
+	var text = textarea.value;
+
 	var li = document.createElement('li');
 	li.setAttribute('data-block','');
 	li.setAttribute('data-temp-id',getTempId());
 	var p = document.createElement('p');
-	p.innerHTML = marked(text.substr(textarea.selectionEnd).trim());
-
+	p.innerHTML = unmarked(text.substr(0,textarea.selectionStart));
 	li.appendChild(p);
-	if(block.nextSibling){
-		block.parentNode.insertBefore(li,block.nextSibling);
-	} else {
-		block.parentNode.appendChild(li);
-	}
-	editBlock(li);
-	var textareaDom = $('textarea');
-	textareaDom.selectionStart = 0;
-	textareaDom.selectionEnd = 0;
+
+	block.parentNode.insertBefore(li,block);
+
+	textarea.value = text.substr(textarea.selectionEnd);
+	textarea.selectionStart = 0;
+	textarea.selectionEnd = 0;
 }
 
 window.handleKeyCtrlEnter = function(e){
@@ -139,37 +134,36 @@ window.handleKeyBackspace = function(e){
 	if(textarea.selectionStart == 0 && textarea.selectionEnd==0) {
 		var block = textarea.closest('[data-block]');
 
-		//grab text,
-		var text = textarea.value;
-
 		//get previous
 		var prevBlock = getPrevBlock(block);
 		if(!prevBlock) return;
 
 		e.preventDefault();
+		//grab text,
+		var text = textarea.value;
 
-		//delete current block
-		block.parentNode.removeChild(block);
+		var prevText = unmarked(prevBlock.querySelector('p').innerHTML);
+
+		//delete previous block
+		prevBlock.parentNode.removeChild(prevBlock);
 
 		//append text
-		editBlock(prevBlock);
-
-		textarea = prevBlock.querySelector('textarea');
-		var oldvalue = textarea.value
-		textarea.value = oldvalue + text;
+		textarea.value = prevText + textarea.value;
 		setInputHeight(textarea);
 
-		textarea.selectionStart = oldvalue.length;
-		textarea.selectionEnd = oldvalue.length;
-
+		textarea.selectionStart = prevText.length;
+		textarea.selectionEnd = prevText.length;
 
 	}
 }
+
+
 
 window.handleKeyDelete = function(e){
 	var textarea = e.target;
 	if(textarea.selectionStart == textarea.value.length && textarea.selectionEnd==textarea.value.length) {
 		var block = textarea.closest('[data-block]');
+		var text = textarea.value;
 
 		//get next block
 		var nextBlock = getNextBlock(block);
@@ -177,18 +171,19 @@ window.handleKeyDelete = function(e){
 
 		e.preventDefault();
 
-		//grab text,
-		var nextvalue = unmarked(nextBlock.querySelector('p').innerHTML);
 
-		//delete next block
-		nextBlock.parentNode.removeChild(nextBlock);
-
-		//append text
-
-		var text = textarea.value;
-		textarea.value = text + nextvalue;
-		setInputHeight(textarea);
-
+		//if next block is a child, grab its text and merge with current block
+		if(nextBlock == block.querySelector('[data-block]')){
+			var nextvalue = unmarked(nextBlock.querySelector('p').innerHTML);
+			nextBlock.parentNode.removeChild(nextBlock);
+			textarea.value += nextvalue;
+			setInputHeight(textarea);
+		} else {
+			block.parentNode.removeChild(block);
+			editBlock(nextBlock);
+			textarea = $('textarea');
+			textarea.value = text + textarea.value;
+		}
 		textarea.selectionStart = text.length;
 		textarea.selectionEnd = text.length;
 

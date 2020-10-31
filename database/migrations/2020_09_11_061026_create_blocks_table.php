@@ -21,11 +21,11 @@ class CreateBlocksTable extends Migration
             $table->integer('order')->unsigned()->default(1);
 
             $table->bigInteger('note_id')->unsigned();
-            $table->foreign('note_id')->references('id')->on('notes');
+            $table->foreign('note_id')->references('id')->on('notes')->onDelete('cascade');
 
 
             $table->bigInteger('parent_id')->unsigned()->nullable();
-            $table->foreign('parent_id')->references('id')->on('blocks');
+            $table->foreign('parent_id')->references('id')->on('blocks')->onDelete('cascade');
 
         });
     }

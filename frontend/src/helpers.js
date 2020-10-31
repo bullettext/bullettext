@@ -1,4 +1,6 @@
 import axios from "axios";
+import store from '@/store';
+//import router from '@/router';
 
 var note_id;
 var history = [];
@@ -65,7 +67,7 @@ window.getData = function(){
 }
 
 document.addEventListener('click',function(e){
-	console.log('click');
+
 	if(e.target.matches('textarea')) {
 		console.log('textarea clicked');
 		console.log(e);
@@ -272,6 +274,17 @@ window.marked = function(text){
 	if(!text) return '';
 	text = text.replace('[[TODO]]','<span class="checkbox"></span>')
 	text = text.replace('[[DONE]]','<span class="checkbox checked"></span>')
+
+	var matches = text.match(/\[\[([^\]]+)\]\]/g);
+	if(matches) matches.forEach(match=>{
+		var note_name = match.replace(/[\[\]]/g,'');
+		var note = store.state.notes.find(note=>{
+			return note.name == note_name
+		});
+		if(!note) return;
+		text = text.replace(match,`<a href="/${note.slug}">${match}</a>`);
+	});
+
 	return text;
 }
 
@@ -279,5 +292,6 @@ window.unmarked = function(text){
 	if(!text) return '';
 	text = text.replace('<span class="checkbox"></span>','[[TODO]]')
 	text = text.replace('<span class="checkbox checked"></span>','[[DONE]]')
+	text = text.replace(/<a href="([^"]*)">([^<]*)<\/a>/g,'$2')
 	return text;
 }

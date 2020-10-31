@@ -17,6 +17,10 @@ class Block extends Model
 		return $this->belongsTo('\App\Note');
 	}
 
+	public function references(){
+		return $this->belongsToMany('\App\Note','references','block_id','note_id');
+	}
+
 	public function children(){
 		return $this->hasMany('\App\Block','parent_id');
 	}
