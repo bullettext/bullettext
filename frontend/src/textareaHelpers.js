@@ -89,6 +89,14 @@ window.getSelectionStart = function(textareaDom,x){
 	return text.length;
 
 }
+window.getCarretPositonByWindow = function() {
+	const positions = getCarretPosition();
+	const textareaDom = $('textarea');
+	return {
+		x: positions.x + textareaDom.getBoundingClientRect().x,
+		y: positions.y + textareaDom.getBoundingClientRect().y
+	}
+}
 
 window.getCarretPosition = function(){
 	var textareaDom = $('textarea');

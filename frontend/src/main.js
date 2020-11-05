@@ -4,6 +4,7 @@ import axios from 'axios';
 import helpers from './helpers.js';
 import textareaHelpers from './textareaHelpers.js';
 import keyboardHelpers from './keyboardHelpers.js';
+import './menuHelpers.js';
 import styles from './assets/style.css';
 import router from '@/router';
 import store from '@/store';

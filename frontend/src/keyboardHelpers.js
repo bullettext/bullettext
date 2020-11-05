@@ -44,7 +44,9 @@ document.addEventListener("DOMContentLoaded", function() {
 		}
 		if(e.key=='ArrowDown' && e.target.matches('textarea')){ //arrowDown
 			handleKeyArrowDown(e);
-
+		}
+		if(e.key=='/'){ //arrowDown
+			handleKeySlash(e);
 		}
 		if(e.key=='z' && e.ctrlKey){
 			revertHistory();
@@ -53,7 +55,20 @@ document.addEventListener("DOMContentLoaded", function() {
 	});
 });
 
+window.handleKeySlash = function(e) {
+	const textarea = e.target;
+	const block = textarea.closest('[data-block]');
+	const text = textarea.value;
+	createMenuDefault();
+}
+
 window.handleKeyArrowUp = function(e){
+	if(window.hasMenu()) {
+		window.prevItemSelectedMenu();
+		e.preventDefault();
+		return;
+	}
+
 	if(e.shiftKey && e.altKey){
 		var block = e.target.closest('[data-block]');
 		var parent = block.parentNode;
@@ -70,6 +85,11 @@ window.handleKeyArrowUp = function(e){
 	}
 }
 window.handleKeyArrowDown = function(e){
+	if(window.hasMenu()) {
+		window.nextItemSelectedMenu();
+		e.preventDefault();
+		return;
+	}
 
 	if(e.shiftKey && e.altKey){
 		var block = e.target.closest('[data-block]');
@@ -94,6 +114,10 @@ window.handleKeyArrowDown = function(e){
 
 window.handleKeyEnter = function(e){
 	e.preventDefault();
+	if(window.hasMenu()) {
+		window.callSelectItemMenu();
+		return;
+	}
 	var textarea = e.target;
 	var block = textarea.closest('[data-block]');
 	var text = textarea.value;
