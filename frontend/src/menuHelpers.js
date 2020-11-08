@@ -1,12 +1,13 @@
 
 window.defaultListMenu = [
-	{ text: 'Todo', function: () => { alert('"Todo" is undeveloped'); }},
+	{ text: 'Todo', function: (e) => { insertTodo() }},
+	{ text: 'Current Date', function: () => { insertCurrentDate() }},
+	{ text: 'Current Time', function: () => { insertCurrentTime() }},
 	{ text: 'Date Picker', function: () => { alert('"Date Picker" is undeveloped'); }},
-	{ text: 'Time Picker', function: () => { alert('"Time Picker" is undeveloped'); }},
 	{ text: 'Make a Reference', function: () => { alert('"Make a Reference" is undeveloped'); }},
-	{ text: 'Underline', function: () => { alert('"Underline" is undeveloped'); }},
-	{ text: 'Strikeout', function: () => { alert('"Strikeout" is undeveloped'); }},
-	{ text: 'Italic', function: () => { alert('"Italic" is undeveloped'); }}
+	{ text: 'Bold', function: () => { insertBold() }},
+	{ text: 'Italic', function: () => { insertItalic(); }},
+	{ text: 'Strikeout', function: () => { insertStrikeout() }},
 ];
 
 window.menuElement = null;
@@ -93,4 +94,75 @@ window.changeItemSelectedMenu = function(change) {
 
 window.callSelectItemMenu = function() {
 	menuElement.querySelector('.selected').onclick();
+}
+
+window.insertTodo = function(){
+	const textarea = $('textarea');
+	const selectionStart = textarea.selectionStart;
+	const prepend = '[[TODO]] ';
+	textarea.value = prepend + textarea.value
+	textarea.selectionStart = textarea.selectionEnd = selectionStart + prepend.length;
+	removeSlash();
+	setInputHeight(textarea);
+}
+
+window.removeSlash = function(){
+	const textarea = $('textarea');
+	if(textarea.value[textarea.selectionStart-1]=='/'){
+		const selectionStart = textarea.selectionStart;
+		textarea.value = textarea.value.substring(0,textarea.selectionStart-1)+textarea.value.substring(textarea.selectionStart);
+		textarea.selectionStart = textarea.selectionEnd = selectionStart-1;
+	}
+}
+
+window.insertCurrentDate = function(){
+	const textarea = $('textarea');
+	const date = new Date();
+	const year = date.getFullYear();
+	const month = ('0'+(date.getMonth()+1)).substr(-2);
+	const day = ('0'+(date.getDate())).substr(-2);
+	const dateStr = `[[${year}-${month}-${day}]]`;
+	const selectionStart = textarea.selectionStart;
+	textarea.value = textarea.value.substring(0,selectionStart-1) + dateStr + textarea.value.substring(selectionStart);
+	textarea.selectionStart = textarea.selectionEnd = selectionStart + dateStr.length -1;
+	setInputHeight(textarea);
+}
+
+window.insertCurrentTime = function(){
+	const textarea = $('textarea');
+	const date = new Date();
+	const hours = ('0'+(date.getHours()+1)).substr(-2);
+	const minutes = ('0'+(date.getMinutes()+1)).substr(-2);
+	const timeStr = `${hours}:${minutes}`;
+	const selectionStart = textarea.selectionStart;
+	textarea.value = textarea.value.substring(0,selectionStart-1) + timeStr + textarea.value.substring(selectionStart);
+	textarea.selectionStart = textarea.selectionEnd = selectionStart + timeStr.length -1;
+	setInputHeight(textarea);
+}
+
+window.insertBold = function(){
+	const textarea = $('textarea');
+	const append = '****';
+	const selectionStart = textarea.selectionStart;
+	textarea.value = textarea.value.substring(0,selectionStart-1) + append + textarea.value.substring(selectionStart);
+	textarea.selectionStart = textarea.selectionEnd = selectionStart + 1;
+	setInputHeight(textarea);
+}
+
+window.insertItalic = function(){
+	const textarea = $('textarea');
+	const append = '**';
+	const selectionStart = textarea.selectionStart;
+	textarea.value = textarea.value.substring(0,selectionStart-1) + append + textarea.value.substring(selectionStart);
+	textarea.selectionStart = textarea.selectionEnd = selectionStart;
+	setInputHeight(textarea);
+}
+
+window.insertStrikeout = function(){
+	const textarea = $('textarea');
+	const append = '~~~~';
+	const selectionStart = textarea.selectionStart;
+	textarea.value = textarea.value.substring(0,selectionStart-1) + append + textarea.value.substring(selectionStart);
+	textarea.selectionStart = textarea.selectionEnd = selectionStart + 1;
+	setInputHeight(textarea);
 }

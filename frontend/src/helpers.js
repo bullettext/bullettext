@@ -272,8 +272,15 @@ window.toastr = function(body,title,color,seconds){
 
 window.marked = function(text){
 	if(!text) return '';
-	text = text.replace('[[TODO]]','<span class="checkbox"></span>')
-	text = text.replace('[[DONE]]','<span class="checkbox checked"></span>')
+	text = text.replace(/\[\[TODO\]\]/g,'<span class="checkbox"></span>')
+	text = text.replace(/\[\[DONE\]\]/g,'<span class="checkbox checked"></span>')
+
+	text = text.replace(/\*\*([^\*]+)\*\*/g,'<strong>$1</strong>')
+	text = text.replace(/__([^_]+)__/g,'<strong>$1</strong>')
+	text = text.replace(/~~([^~]+)~~/g,'<del>$1</del>')
+
+	text = text.replace(/\*([^\*]+)\*/g,'<em>$1</em>')
+	text = text.replace(/_([^_]+)_/g,'<em>$1</em>')
 
 	var matches = text.match(/\[\[([^\]]+)\]\]/g);
 	if(matches) matches.forEach(match=>{
@@ -290,8 +297,13 @@ window.marked = function(text){
 
 window.unmarked = function(text){
 	if(!text) return '';
-	text = text.replace('<span class="checkbox"></span>','[[TODO]]')
-	text = text.replace('<span class="checkbox checked"></span>','[[DONE]]')
+	text = text.replace(/<span class="checkbox"><\/span>/g,'[[TODO]]')
+	text = text.replace(/<span class="checkbox checked"><\/span>/g,'[[DONE]]')
+
+	text = text.replace(/<strong>([\s\S]+?)<\/strong>/g,'**$1**')
+	text = text.replace(/<em>([\s\S]+?)<\/em>/g,'*$1*')
+	text = text.replace(/<del>([\s\S]+?)<\/del>/g,'~~$1~~')
+
 	text = text.replace(/<a href="([^"]*)">([^<]*)<\/a>/g,'$2')
 	return text;
 }
