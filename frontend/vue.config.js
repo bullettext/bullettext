@@ -14,7 +14,7 @@
   module.exports = {
 
     devServer: {
-      proxy: 'http://localhost.boldjournaling.com/',
+      proxy: process.env.VUE_APP_PROXY,
     },
 
     indexPath: '../resources/views/index.php',
