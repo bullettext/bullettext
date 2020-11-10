@@ -57,6 +57,15 @@ document.addEventListener("DOMContentLoaded", function() {
 		if(e.key=='i' && e.ctrlKey) {
 			setItalic(e);
 		}
+		if(e.key=='[') {
+			addLetter(']');
+		}
+		if(e.key=='(') {
+			addLetter(')');
+		}
+		if(e.key=='{') {
+			addLetter('}');
+		}
 	});
 });
 
