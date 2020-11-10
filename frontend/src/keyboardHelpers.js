@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 		console.log(e.key)
 		if(e.key=='Escape' && e.target.matches('textarea')){
-			removeTextareas();
+			handleKeyEscape(e);
 		}
 		if(e.key=='Backspace' && e.target.matches('textarea')){
 			handleKeyBackspace(e);
@@ -51,9 +51,23 @@ document.addEventListener("DOMContentLoaded", function() {
 		if(e.key=='z' && e.ctrlKey){
 			revertHistory();
 		}
-
+		if(e.key=='b' && e.ctrlKey) {
+			setBold(e);
+		}
+		if(e.key=='i' && e.ctrlKey) {
+			setItalic(e);
+		}
 	});
 });
+
+window.handleKeyEscape = function(e) {
+	if(window.hasMenu()) {
+		window.destroyMenu();
+		e.preventDefault();
+	} else {
+		removeTextareas();
+	}
+}
 
 window.handleKeySlash = function(e) {
 	const textarea = e.target;
@@ -139,17 +153,7 @@ window.handleKeyEnter = function(e){
 window.handleKeyCtrlEnter = function(e){
 	e.preventDefault();
 	var textarea = e.target;
-	var text = textarea.value;
-
-	if (!text.match(/^\[\[(TODO|DONE)\]\]/)) {
-		text = "[[TODO]] " + text;
-	} else if (text.match(/^\[\[TODO\]\]/)) {
-		text = text.replace(/^\[\[TODO\]\]/, "[[DONE]]");
-	} else if (text.match(/^\[\[DONE\]\]/)) {
-		text = text.replace(/^\[\[DONE\]\] */, "");
-	}
-
-	textarea.value = text;
+	setTodo(textarea);
 	setInputHeight(textarea);
 }
 

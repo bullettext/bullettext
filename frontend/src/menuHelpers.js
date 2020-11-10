@@ -5,9 +5,9 @@ window.defaultListMenu = [
 	{ text: 'Current Time', function: () => { insertCurrentTime() }},
 	{ text: 'Date Picker', function: () => { alert('"Date Picker" is undeveloped'); }},
 	{ text: 'Make a Reference', function: () => { alert('"Make a Reference" is undeveloped'); }},
-	{ text: 'Bold', function: () => { insertBold() }},
-	{ text: 'Italic', function: () => { insertItalic(); }},
-	{ text: 'Strikeout', function: () => { insertStrikeout() }},
+	{ text: 'Bold', function: () => { setBold() }},
+	{ text: 'Italic', function: () => { setItalic(); }},
+	{ text: 'Strikeout', function: () => { setStrikeout() }},
 ];
 
 window.menuElement = null;
@@ -37,8 +37,10 @@ window.updateMenu = function(list) {
 		itemElement.classList.add('item');
 		itemElement.innerHTML = item.text;
 		itemElement.onclick = () => {
+			removeSlash();
 			item.function();
 			destroyMenu();
+			setInputHeight(textarea);
 		}
 		menuElement.appendChild(itemElement);
 	});
@@ -98,10 +100,7 @@ window.callSelectItemMenu = function() {
 
 window.insertTodo = function(){
 	const textarea = $('textarea');
-	const selectionStart = textarea.selectionStart;
-	const prepend = '[[TODO]] ';
-	textarea.value = prepend + textarea.value
-	textarea.selectionStart = textarea.selectionEnd = selectionStart + prepend.length;
+	setTodo(textarea);
 	removeSlash();
 	setInputHeight(textarea);
 }
@@ -123,9 +122,8 @@ window.insertCurrentDate = function(){
 	const day = ('0'+(date.getDate())).substr(-2);
 	const dateStr = `[[${year}-${month}-${day}]]`;
 	const selectionStart = textarea.selectionStart;
-	textarea.value = textarea.value.substring(0,selectionStart-1) + dateStr + textarea.value.substring(selectionStart);
-	textarea.selectionStart = textarea.selectionEnd = selectionStart + dateStr.length -1;
-	setInputHeight(textarea);
+	textarea.value = textarea.value.substring(0,selectionStart) + dateStr + textarea.value.substring(selectionStart);
+	textarea.selectionStart = textarea.selectionEnd = selectionStart + dateStr.length;
 }
 
 window.insertCurrentTime = function(){
@@ -135,34 +133,6 @@ window.insertCurrentTime = function(){
 	const minutes = ('0'+(date.getMinutes()+1)).substr(-2);
 	const timeStr = `${hours}:${minutes}`;
 	const selectionStart = textarea.selectionStart;
-	textarea.value = textarea.value.substring(0,selectionStart-1) + timeStr + textarea.value.substring(selectionStart);
-	textarea.selectionStart = textarea.selectionEnd = selectionStart + timeStr.length -1;
-	setInputHeight(textarea);
-}
-
-window.insertBold = function(){
-	const textarea = $('textarea');
-	const append = '****';
-	const selectionStart = textarea.selectionStart;
-	textarea.value = textarea.value.substring(0,selectionStart-1) + append + textarea.value.substring(selectionStart);
-	textarea.selectionStart = textarea.selectionEnd = selectionStart + 1;
-	setInputHeight(textarea);
-}
-
-window.insertItalic = function(){
-	const textarea = $('textarea');
-	const append = '**';
-	const selectionStart = textarea.selectionStart;
-	textarea.value = textarea.value.substring(0,selectionStart-1) + append + textarea.value.substring(selectionStart);
-	textarea.selectionStart = textarea.selectionEnd = selectionStart;
-	setInputHeight(textarea);
-}
-
-window.insertStrikeout = function(){
-	const textarea = $('textarea');
-	const append = '~~~~';
-	const selectionStart = textarea.selectionStart;
-	textarea.value = textarea.value.substring(0,selectionStart-1) + append + textarea.value.substring(selectionStart);
-	textarea.selectionStart = textarea.selectionEnd = selectionStart + 1;
-	setInputHeight(textarea);
+	textarea.value = textarea.value.substring(0,selectionStart) + timeStr + textarea.value.substring(selectionStart);
+	textarea.selectionStart = textarea.selectionEnd = selectionStart + timeStr.length;
 }
