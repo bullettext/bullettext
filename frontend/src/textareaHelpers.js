@@ -15,7 +15,6 @@ window.setInputHeight = function(el){
 	el.style.height = textareaHeight + "px";
 }
 
-
 window.removeTextareas = function(){
 	$$('textarea').forEach(textarea=>{
 		var p = textarea.nextSibling;
@@ -25,8 +24,6 @@ window.removeTextareas = function(){
 		}
 	});
 }
-
-
 
 window.getSelectionEnd = function(textareaDom,x,y){
 	var originalText = textareaDom.value;
@@ -89,6 +86,14 @@ window.getSelectionStart = function(textareaDom,x){
 	return text.length;
 
 }
+window.getCarretPositonByWindow = function() {
+	const positions = getCarretPosition();
+	const textareaDom = $('textarea');
+	return {
+		x: positions.x + textareaDom.getBoundingClientRect().x,
+		y: positions.y + textareaDom.getBoundingClientRect().y
+	}
+}
 
 window.getCarretPosition = function(){
 	var textareaDom = $('textarea');
@@ -140,4 +145,43 @@ window.isLastLine = function(textareaDom){
 	console.log('getCarretPosition last line',pos,ret);
 
 	return pos.y == ret.y;
+}
+
+window.setTextFormat = function(append, event) {
+	const textarea = $('textarea');
+	const selectionStart = textarea.selectionStart;
+	const selectionEnd = textarea.selectionEnd;
+	const sizeAppend = append.length;
+	textarea.value = textarea.value.substring(0,selectionStart) + append + textarea.value.substring(selectionStart);
+	textarea.value = textarea.value.substring(0,selectionEnd+sizeAppend) + append + textarea.value.substring(selectionEnd+sizeAppend);
+	textarea.selectionStart = selectionStart + sizeAppend;
+	textarea.selectionEnd = selectionEnd + sizeAppend;
+	setInputHeight(textarea);
+	if(event) event.preventDefault();
+}
+
+window.setBold = function(event) {
+	setTextFormat('**', event);
+}
+
+window.setItalic = function(event) {
+	setTextFormat('*', event);
+}
+
+window.setStrikeout = function(event) {
+	setTextFormat('~~', event);
+}
+
+window.setTodo = function(textareaDom) {
+	var text = textareaDom.value;
+
+	if (!text.match(/^\[\[(TODO|DONE)\]\]/)) {
+		text = "[[TODO]] " + text;
+	} else if (text.match(/^\[\[TODO\]\]/)) {
+		text = text.replace(/^\[\[TODO\]\]/, "[[DONE]]");
+	} else if (text.match(/^\[\[DONE\]\]/)) {
+		text = text.replace(/^\[\[DONE\]\] */, "");
+	}
+
+	textareaDom.value = text;
 }

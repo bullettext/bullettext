@@ -5,7 +5,7 @@ body {
 }
 *, *:after, *:before { box-sizing: border-box; }
 
-.notes li { padding:10px ;  }
+.notes li { padding:10px;  }
 
 .vanilla p { margin:0;}
 .blocks p { margin:0;}
@@ -63,3 +63,25 @@ textarea + p { display:none; }
 
 @media(min-width:992px){.is-mobile{ display:none !important; }}
 @media(max-width:991px){.is-desktop{ display:none !important; }}
+
+
+
+.menu-context {
+	position: absolute;
+	background-color: #fff;
+	box-shadow: 1px 1px 3px rgba(20,20,20,0.4);
+	/* padding: 4px; */
+	transform: translateY(-4px);
+}
+
+.item {
+	padding: 4px 6px;
+	border: 1px solid #ccc;
+}
+.item:last-child {
+	border: none
+}
+
+.item.selected {
+	background: rgba(160, 143, 199, 0.4);
+}
