@@ -1,4 +1,4 @@
-# Bold 
+# Bullet Text
 
 ### Instalation process
 
