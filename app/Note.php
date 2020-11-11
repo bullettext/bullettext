@@ -11,7 +11,7 @@ use Auth;
 
 class Note extends Model
 {
-    //
+		//
 	use SoftDeletes;
 	protected $fillable = [
 		'name',
@@ -36,18 +36,22 @@ class Note extends Model
 		parent::boot();
 
 		Note::saving(function($model){
+			$user = Auth::user();
+			if($user){
+				$user_id = $user->id;
+			} else {
+				$user_id = $model->user_id;
+			}
 
-        $user_id = Auth::user()->id;
+			$slug = Str::slug($model->name);
 
-        $slug = Str::slug($model->name);
-
-        $add = 0;
-        $slug_final = $slug;
-        while(\App\Note::where('user_id',$user_id)->where('slug',$slug_final)->count()) {
-            $slug_final = $slug.'-'.(++$add);
-        }
-				$model->slug = $slug_final;
-				return $model;
+			$add = 0;
+			$slug_final = $slug;
+			while(\App\Note::where('user_id',$user_id)->where('slug',$slug_final)->count()) {
+				$slug_final = $slug.'-'.(++$add);
+			}
+			$model->slug = $slug_final;
+			return $model;
 
 		});
 	}

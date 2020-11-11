@@ -2,7 +2,7 @@
 
   <div class="container">
 
-    <h1 class="mt-5 mb-3 text-center">Bold Journaling</h1>
+    <h1 class="mt-5 mb-3 text-center">Bullet Text</h1>
 
     <div v-if="error" class="alert alert-danger">{{ error }}</div>
 
