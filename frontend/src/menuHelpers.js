@@ -1,14 +1,16 @@
+import store from '@/store';
 
 window.defaultListMenu = [
 	{ text: 'Todo', function: (e) => { insertTodo() }},
 	{ text: 'Current Date', function: () => { insertCurrentDate() }},
 	{ text: 'Current Time', function: () => { insertCurrentTime() }},
 	{ text: 'Date Picker', function: () => { alert('"Date Picker" is undeveloped'); }},
-	{ text: 'Make a Reference', function: () => { alert('"Make a Reference" is undeveloped'); }},
+	{ text: 'Make a Reference', function: () => { createMenuReference(); }},
 	{ text: 'Bold', function: () => { setBold() }},
 	{ text: 'Italic', function: () => { setItalic(); }},
 	{ text: 'Strikeout', function: () => { setStrikeout() }},
 ];
+window.functionsList = null;
 
 window.menuElement = null;
 
@@ -29,20 +31,40 @@ window.createMenuDefault = function() {
 	changeItemSelectedMenu();
 }
 
-window.updateMenu = function(list) {
-	window.resetMenu();
+window.createMenuReference = function() {
+	createMenu();
+	let listNotes = [ ];
+	store.state.notes.forEach(note=>{
+		listNotes.push({
+			text: note.name,
+			function: () => {
+				insertText(`[[${note.name}]]`);
+			}
+		});
+	});
+	updateMenu(listNotes);
+	changeItemSelectedMenu();
+}
 
-	list.forEach(item => {
+window.updateMenu = function(list, reset) {
+	reset = reset || true;
+	if(reset) window.resetMenu();
+
+	list.forEach((item, index) => {
 		let itemElement = document.createElement('div');
 		itemElement.classList.add('item');
 		itemElement.innerHTML = item.text;
 		itemElement.onclick = () => {
-			removeSlash();
-			item.function();
-			destroyMenu();
-			setInputHeight(textarea);
+			clickItemMenu(index);
 		}
 		menuElement.appendChild(itemElement);
+		functionsList[functionsList.length] = {
+			function: () => {
+				removeSlash();
+				destroyMenu();
+				item.function();
+			}
+		};
 	});
 }
 
@@ -56,12 +78,14 @@ window.hasMenu = function() {
 
 window.resetMenu = function() {
 	menuElement.innerHTML = '';
+	functionsList = [];
 }
 
 window.destroyMenu = function() {
 	$$('.menu-context').forEach(element => {
 		element.remove();
 	});
+	removeSlash();
 	window.menuElement = null;
 }
 
@@ -74,39 +98,41 @@ window.prevItemSelectedMenu = function() {
 }
 
 window.changeItemSelectedMenu = function(change) {
-	const selectedElement = window.menuElement.querySelector('.selected');
+  const selectedElement = window.menuElement.querySelector('.selected');
 	if(selectedElement == null) {
 		window.menuElement.querySelector('.item').classList.add('selected');
 		return;
 	}
 	const itemsElements = window.menuElement.querySelectorAll('.item');
-	const selectedIndex = (Array.from(selectedElement.parentNode.children).indexOf(selectedElement) + 1);
+	const selectedIndex = getIndexOfElement(selectedElement);
 	let futureIndex = selectedIndex + change;
 	if(itemsElements.length < futureIndex) {
 		futureIndex = 1;
-		console.log('More then '+itemsElements.length);
 	} else if(futureIndex < 1) {
 		futureIndex = itemsElements.length;
-		console.log('Lest then zero');
 	}
 	selectedElement.classList.remove('selected');
-	console.log({futureIndex, selectedIndex, length: itemsElements.length});
 	window.menuElement.querySelector(`.item:nth-child(${futureIndex})`).classList.add('selected');
 }
 
-window.callSelectItemMenu = function() {
-	menuElement.querySelector('.selected').onclick();
+window.clickItemMenu = function(index) {
+	functionsList[index].function();
 }
 
-window.insertTodo = function(){
-	const textarea = $('textarea');
+window.callSelectItemMenu = function() {
+	let index = getIndexOfElement(menuElement.querySelector('.selected')) -1;
+	functionsList[index].function();
+}
+
+window.insertTodo = function() {
+	const textarea = getTextarea();
 	setTodo(textarea);
 	removeSlash();
 	setInputHeight(textarea);
 }
 
-window.removeSlash = function(){
-	const textarea = $('textarea');
+window.removeSlash = function() {
+	const textarea = getTextarea();
 	if(textarea.value[textarea.selectionStart-1]=='/'){
 		const selectionStart = textarea.selectionStart;
 		textarea.value = textarea.value.substring(0,textarea.selectionStart-1)+textarea.value.substring(textarea.selectionStart);
@@ -114,25 +140,38 @@ window.removeSlash = function(){
 	}
 }
 
-window.insertCurrentDate = function(){
-	const textarea = $('textarea');
+window.insertCurrentDate = function() {
 	const date = new Date();
 	const year = date.getFullYear();
 	const month = ('0'+(date.getMonth()+1)).substr(-2);
 	const day = ('0'+(date.getDate())).substr(-2);
 	const dateStr = `[[${year}-${month}-${day}]]`;
-	const selectionStart = textarea.selectionStart;
-	textarea.value = textarea.value.substring(0,selectionStart) + dateStr + textarea.value.substring(selectionStart);
-	textarea.selectionStart = textarea.selectionEnd = selectionStart + dateStr.length;
+	insertText(dateStr);
 }
 
-window.insertCurrentTime = function(){
-	const textarea = $('textarea');
+window.insertCurrentTime = function() {
 	const date = new Date();
 	const hours = ('0'+(date.getHours()+1)).substr(-2);
 	const minutes = ('0'+(date.getMinutes()+1)).substr(-2);
 	const timeStr = `${hours}:${minutes}`;
+	insertText(timeStr);
+}
+
+window.getIndexOfElement = function(element) {
+	return (Array.from(element.parentNode.children).indexOf(element) + 1);
+}
+
+window.insertText = function(text) {
+	const textarea = getTextarea();
 	const selectionStart = textarea.selectionStart;
-	textarea.value = textarea.value.substring(0,selectionStart) + timeStr + textarea.value.substring(selectionStart);
-	textarea.selectionStart = textarea.selectionEnd = selectionStart + timeStr.length;
+	textarea.value = textarea.value.substring(0,selectionStart) + text + textarea.value.substring(selectionStart);
+	textarea.selectionStart = textarea.selectionEnd = selectionStart + text.length;
+}
+
+window.getTextarea = function() {
+	const textarea = $('textarea');
+	if(textarea == null) {
+		console.error('Textarea not found');
+	}
+	return textarea;
 }
