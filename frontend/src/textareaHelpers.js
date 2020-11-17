@@ -147,6 +147,22 @@ window.isLastLine = function(textareaDom){
 	return pos.y == ret.y;
 }
 
+window.addLetter = function(letter) {
+	const textarea = $('textarea');
+	const selectionStart = textarea.selectionStart;
+	console.log({
+		original: textarea.value,
+		before: textarea.value.substring(0,selectionStart),
+		letter,
+		after: textarea.value.substring(selectionStart)
+	})
+	textarea.value = textarea.value.substring(0,selectionStart) +
+		letter +
+		textarea.value.substring(selectionStart);
+	textarea.selectionStart = textarea.selectionEnd = selectionStart;
+	setInputHeight(textarea);
+}
+
 window.setTextFormat = function(append, event) {
 	const textarea = $('textarea');
 	const selectionStart = textarea.selectionStart;

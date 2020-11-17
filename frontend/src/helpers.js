@@ -165,7 +165,9 @@ window.saveAll = function(){
 			url:'/api/notes/save-blocks/'+note_id,
 			data:data,
 	}).then(res=>{
-			updateBlocksRefs(res.data);
+		console.log(res);
+			updateBlocksRefs(res.data.temp_ids);
+			store.state.notes = [...res.data.new_notes, ...store.state.notes];
 	}).catch(res=>{
 			console.error('save error');
 			console.error(res);
