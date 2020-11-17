@@ -54,7 +54,9 @@ window.updateMenu = function(list, reset) {
 		let itemElement = document.createElement('div');
 		itemElement.classList.add('item');
 		itemElement.innerHTML = item.text;
-		itemElement.onclick = () => {
+		itemElement.onclick = (e) => {
+			e.preventDefault();
+			e.stopPropagation();
 			clickItemMenu(index);
 		}
 		menuElement.appendChild(itemElement);
