@@ -44,6 +44,7 @@ class NoteController extends Controller
 
 		$blocks_ids = [];
 		$temp_ids = [];
+		$new_notes = [];
 		//save all first;
 		foreach($input as $postdata){
 
@@ -77,55 +78,62 @@ class NoteController extends Controller
 				foreach($matches[1] as $block_name){
 
 
-					$related_note = \App\Note::firstOrCreate(['name'=>$block_name,'user_id'=>$user->id]);
-
+					$related_note = \App\Note::where(['name'=>$block_name,'user_id'=>$user->id])->first();
+					if($related_note == null) {
+						$related_note = \App\Note::create(['name'=>$block_name,'user_id'=>$user->id]);
+						$new_notes[] = $related_note;
+					}
 					\App\Reference::create([
 						'note_id'=>$related_note->id,
 						'block_id'=>$block->id,
-						]);
-					}
-
+					]);
 				}
 
 			}
 
-			foreach($input as $postdata){
-				if(!empty($postdata['id'])){
-					$block_id = $postdata['id'];
-				} else {
-					$block_id = $temp_ids[$postdata['temp_id']];
-				}
-				$block = \App\Block::findOrFail($block_id);
+		}
 
-				$parent_id = $postdata['parent_id'];
-				if(preg_match('/^temp/',$parent_id)){
-					$parent_id = $temp_ids[$parent_id];
-				}
-				$block->parent_id = $parent_id;
-				$block->save();
+		foreach($input as $postdata){
+			if(!empty($postdata['id'])){
+				$block_id = $postdata['id'];
+			} else {
+				$block_id = $temp_ids[$postdata['temp_id']];
 			}
+			$block = \App\Block::findOrFail($block_id);
+
+			$parent_id = $postdata['parent_id'];
+			if(preg_match('/^temp/',$parent_id)){
+				$parent_id = $temp_ids[$parent_id];
+			}
+			$block->parent_id = $parent_id;
+			$block->save();
+		}
 
 			//$note->blocks()->whereNotIn('parent-Id',$blocks_ids)->delete();
-			$oldBlocks = $note->blocks()->whereNotIn('id',$blocks_ids)->get();
-			foreach($oldBlocks as $oldBlock){
-				$oldBlock->delete();
-			}
-
-			return $temp_ids;
+		$oldBlocks = $note->blocks()->whereNotIn('id',$blocks_ids)->get();
+		foreach($oldBlocks as $oldBlock){
+			$oldBlock->delete();
 		}
 
-
-		public function update(Request $request, \App\Note $note){
-			if($note->user_id != Auth::user()->id) abort(403);
-			$input = $request->input();
-
-			$note->name = $input['name'];
-
-			$note->save();
-			return $note;
-		}
-
-
-
-
+		$return = [];
+		$return['temp_ids'] = $temp_ids;
+		$return['new_notes'] = $new_notes;
+		// dd($return);
+		return $return;
 	}
+
+
+	public function update(Request $request, \App\Note $note){
+		if($note->user_id != Auth::user()->id) abort(403);
+		$input = $request->input();
+
+		$note->name = $input['name'];
+
+		$note->save();
+		return $note;
+	}
+
+
+
+
+}
