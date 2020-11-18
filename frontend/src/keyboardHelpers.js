@@ -59,6 +59,9 @@ document.addEventListener("DOMContentLoaded", function() {
 		}
 		if(e.key=='[') {
 			addLetter(']');
+			if(prevCharacter('[') && nextCharacter(']')) {
+				createMenuReference();
+			}
 		}
 		if(e.key=='(') {
 			addLetter(')');
