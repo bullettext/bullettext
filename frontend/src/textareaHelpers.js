@@ -150,17 +150,24 @@ window.isLastLine = function(textareaDom){
 window.addLetter = function(letter) {
 	const textarea = $('textarea');
 	const selectionStart = textarea.selectionStart;
-	console.log({
-		original: textarea.value,
-		before: textarea.value.substring(0,selectionStart),
-		letter,
-		after: textarea.value.substring(selectionStart)
-	})
 	textarea.value = textarea.value.substring(0,selectionStart) +
 		letter +
 		textarea.value.substring(selectionStart);
 	textarea.selectionStart = textarea.selectionEnd = selectionStart;
 	setInputHeight(textarea);
+}
+
+window.prevCharacter = function(letter) {
+	const textarea = $('textarea');
+	const selectionStart = textarea.selectionStart;
+	let prevCharacter = textarea.value.substring(selectionStart-1,selectionStart);
+	return letter == prevCharacter;
+}
+window.nextCharacter = function(letter) {
+	const textarea = $('textarea');
+	const selectionEnd = textarea.selectionEnd;
+	let nextCharacter = textarea.value.substring(selectionEnd,selectionEnd+1);
+	return letter == nextCharacter;
 }
 
 window.setTextFormat = function(append, event) {

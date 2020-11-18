@@ -38,7 +38,14 @@ window.createMenuReference = function() {
 		listNotes.push({
 			text: note.name,
 			function: () => {
-				insertText(`[[${note.name}]]`);
+				const textarea = $('textarea');
+				const selectionStart = textarea.selectionStart;
+				let context = textarea.value.substring(selectionStart-2,selectionStart+2);
+				let str = `${note.name}`;
+				if(context != '[[]]') {
+					str = `[[${note.name}]]`;
+				}
+				insertText(str);
 			}
 		});
 	});
