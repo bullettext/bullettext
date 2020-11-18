@@ -79,9 +79,6 @@ window.handleKeyEscape = function(e) {
 }
 
 window.handleKeySlash = function(e) {
-	const textarea = e.target;
-	const block = textarea.closest('[data-block]');
-	const text = textarea.value;
 	createMenuDefault();
 }
 

@@ -67,8 +67,11 @@ window.getData = function(){
 }
 
 document.addEventListener('click',function(e){
-
-	if(e.target.matches('textarea')) {
+	console.log(e.target);
+	if(e.target.classList.contains('checkbox')) {
+		console.log('checkbox clicked');
+		toggleCheckbox(e);
+	} else if(e.target.matches('textarea')) {
 		console.log('textarea clicked');
 		console.log(e);
 		e.stopPropagation();
@@ -308,4 +311,14 @@ window.unmarked = function(text){
 
 	text = text.replace(/<a href="([^"]*)">([^<]*)<\/a>/g,'$2')
 	return text;
+}
+
+window.toggleCheckbox = function(event) {
+	event.preventDefault();
+	event.stopPropagation();
+	if(event.target.classList.contains('checked')) {
+		event.target.classList.remove('checked');
+	} else {
+		event.target.classList.add('checked');
+	}
 }

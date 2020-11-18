@@ -11,7 +11,7 @@ body {
 .blocks p { margin:0;}
 
 
-.checkbox { width:15px; height:15px; display:inline-block; margin-right:3px; color: #000;}
+.checkbox { cursor: pointer; width:15px; height:15px; display:inline-block; margin-right:3px; color: #000;}
 .checkbox:before { content:'☐';  }
 .checkbox.checked { }
 .checkbox.checked:before { content:'☑';  }
