@@ -33,7 +33,16 @@ class NoteController extends Controller
 
 	public function get(Request $request, $slug){
 		$user_id = Auth::user()->id;
-		$note = \App\Note::with('blocks','references')->where('user_id',$user_id)->where('slug',$slug)->firstOrFail();
+		$note = \App\Note::with('blocks','references')->where('user_id',$user_id)->where('slug',$slug)->first();
+		if($note == null) {
+			$data = [
+				'user_id'=>Auth::user()->id,
+				'name'=>ucfirst($slug),
+				'slug'=>$slug
+			];
+			$note = \App\Note::create($data);
+			$note->load('blocks','references');
+		}
 		return $note;
 	}
 
