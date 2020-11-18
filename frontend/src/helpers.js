@@ -1,6 +1,6 @@
 import axios from "axios";
 import store from '@/store';
-//import router from '@/router';
+import Router from '@/router';
 
 var note_id;
 var history = [];
@@ -68,7 +68,13 @@ window.getData = function(){
 
 document.addEventListener('click',function(e){
 	console.log(e.target);
-	if(e.target.classList.contains('checkbox')) {
+	if(e.target.classList.contains('reference')) {
+		console.log('link reference clicked');
+		e.preventDefault();
+		e.stopPropagation();
+		console.log(Router);
+		Router.push(e.target.getAttribute('href'));
+	} else if(e.target.classList.contains('checkbox')) {
 		console.log('checkbox clicked');
 		toggleCheckbox(e);
 	} else if(e.target.matches('textarea')) {
@@ -294,7 +300,7 @@ window.marked = function(text){
 			return note.name == note_name
 		});
 		if(!note) return;
-		text = text.replace(match,`<a href="/${note.slug}">${match}</a>`);
+		text = text.replace(match,`<a class="reference" href="/${note.slug}">${match}</a>`);
 	});
 
 	return text;
@@ -309,7 +315,7 @@ window.unmarked = function(text){
 	text = text.replace(/<em>([\s\S]+?)<\/em>/g,'*$1*')
 	text = text.replace(/<del>([\s\S]+?)<\/del>/g,'~~$1~~')
 
-	text = text.replace(/<a href="([^"]*)">([^<]*)<\/a>/g,'$2')
+	text = text.replace(/<a class="reference" href="([^"]*)">([^<]*)<\/a>/g,'$2')
 	return text;
 }
 
