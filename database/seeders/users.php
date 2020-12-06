@@ -1,6 +1,12 @@
 <?php
+namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+
+use App\Models\User;
+use App\Models\Note;
+use App\Models\Block;
+use Hash;
 
 class users extends Seeder
 {
@@ -14,30 +20,29 @@ class users extends Seeder
     	//DB::table('users')->delete();
         // DB::table('users')->truncate();
 
-    	$user = \App\User::create([
+    	$user = User::create([
     		'name'=>'admin',
     		'email'=>'admin@admin.com',
     		'password'=>Hash::make('admin'),
-    		'is_admin'=>true,
         ]);
 
-        $note = \App\Note::create([
+        $note = Note::create([
             'name'=>'first note',
             'slug'=>'first-note',
             'user_id'=>$user->id
         ]);
-        $block1 = \App\Block::create([
+        $block1 = Block::create([
             'text'=>'lorem ipsum',
             'note_id'=>$note->id,
             'meta'=>[],
         ]);
-        $block2 = \App\Block::create([
+        $block2 = Block::create([
             'text'=>'lorem ipsum 2',
             'order'=>2,
             'note_id'=>$note->id,
             'meta'=>[],
         ]);
-        $block3 = \App\Block::create([
+        $block3 = Block::create([
             'text'=>'lorem ipsum 1.1',
             'note_id'=>$note->id,
             'parent_id'=>$block1->id,

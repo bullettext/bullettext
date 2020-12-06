@@ -1,6 +1,6 @@
 <?php
 
-namespace App;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -14,15 +14,15 @@ class Block extends Model
 	];
 
 	public function note(){
-		return $this->belongsTo('\App\Note');
+		return $this->belongsTo('\App\Models\Note');
 	}
 
 	public function references(){
-		return $this->belongsToMany('\App\Note','references','block_id','note_id');
+		return $this->belongsToMany('\App\Models\Note','references','block_id','note_id');
 	}
 
 	public function children(){
-		return $this->hasMany('\App\Block','parent_id');
+		return $this->hasMany('\App\Models\Block','parent_id');
 	}
 
 }

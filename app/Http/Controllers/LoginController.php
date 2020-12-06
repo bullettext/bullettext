@@ -6,13 +6,14 @@ use Illuminate\Http\Request;
 use Auth;
 use Response;
 use Hash;
+use App\Models\User;
 class LoginController extends Controller
 {
 
 
     public function users(Request $request) {
         if(!Auth::user()->is_admin) abort(403);
-        return \App\User::all();
+        return User::all();
     }
 
 
@@ -58,11 +59,11 @@ class LoginController extends Controller
         $credentials = $request->only('name','email','password');
         $credentials['email'] =  strtolower($credentials['email']);
 
-        $existing = \App\User::where('email',$credentials['email'])->count();
+        $existing = User::where('email',$credentials['email'])->count();
         if($existing) return Response::make("E-mail {$credentials['email']} já registrado, faça o login.",403);
 
         $credentials['password'] = Hash::make($credentials['password']);
-        $user = \App\User::create($credentials);
+        $user = User::create($credentials);
         Auth::login($user, true);
         return Response::make($user);
     }
@@ -72,7 +73,7 @@ class LoginController extends Controller
         $credentials = $request->only('email');
         $credentials['email'] =  strtolower($credentials['email']);
 
-        $user = \App\User::where('email',$credentials['email'])->first();
+        $user = User::where('email',$credentials['email'])->first();
         if(empty($user)) return Response::make("E-mail {$credentials['email']} não registrado.",403);
 
         //TODO enviar email
@@ -93,7 +94,7 @@ class LoginController extends Controller
         $credentials = $request->only('name','email','password','token');
         $credentials['email'] =  strtolower($credentials['email']);
 
-        $user = \App\User::where('email',$credentials['email'])->first();
+        $user = User::where('email',$credentials['email'])->first();
         if(empty($user)) return Response::make("E-mail {$credentials['email']} não registrado.",403);
         if($credentials['token'] != md5($user->id.$user->password)) return Response::make("Requisicao invalida.",403);
 
@@ -105,7 +106,7 @@ class LoginController extends Controller
 
     // public function loginWith(Request $request,$user_id) {
     //     if(!Auth::user()->is_admin) abort(403);
-    //     $user = \App\User::findOrFail($user_id);
+    //     $user = User::findOrFail($user_id);
     //     Auth::login($user);
     //     return 'ok';
     // }

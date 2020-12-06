@@ -7,6 +7,7 @@ use DB;
 use Response;
 use Log;
 use Arr;
+use App\Models\Block;
 class BlockController extends Controller
 {
 
@@ -20,7 +21,7 @@ class BlockController extends Controller
             'order'=>$input['order'] ?? 1,
             'parent_id'=>$input['parent_id'] ?? null,
         ];
-        $block = \App\Block::create($data);
+        $block = Block::create($data);
 
         $blocks = DB::table('blocks')->where('note_id',$input['note_id'])->where('parent_id',$block->parent_id)->select('id','order')->orderBy('order')->orderBy('id')->get();
         $countBlocks = count($blocks);
@@ -32,13 +33,13 @@ class BlockController extends Controller
         return $block;
     }
 
-    public function get(Request $request, \App\Block $block){
+    public function get(Request $request, Block $block){
         if($block->note->user_id != Auth::user()->id) abort(403);
         return $block;
     }
 
 
-    public function update(Request $request, \App\Block $block){
+    public function update(Request $request, Block $block){
         if($block->note->user_id != Auth::user()->id) abort(403);
         $input = $request->input();
 
@@ -66,10 +67,10 @@ class BlockController extends Controller
                     'order'=>$inputBlock['order'] ?? 1,
                     'parent_id'=>$inputBlock['parent_id'] ?? null,
                 ];
-                $block = \App\Block::create($data);
+                $block = Block::create($data);
                 $blocksCreated++;
             } else {
-                $block = \App\Block::findOrFail($inputBlock['id']);
+                $block = Block::findOrFail($inputBlock['id']);
                 if(array_key_exists('note_id',$inputBlock)) $block->note_id = $inputBlock['note_id'];
                 if(array_key_exists('meta',$inputBlock)) $block->meta = $inputBlock['meta'];
                 if(array_key_exists('text',$inputBlock)) $block->text = $inputBlock['text'];
@@ -85,7 +86,7 @@ class BlockController extends Controller
     }
 
 
-    public function delete(Request $request, \App\Block $block){
+    public function delete(Request $request, Block $block){
         if($block->note->user_id != Auth::user()->id) abort(403);
         $block->delete();
         return;
