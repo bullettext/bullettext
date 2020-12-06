@@ -1,11 +1,8 @@
-import Vue from 'vue'
 import Vuex from 'vuex'
 import axios from 'axios';
 import router from '@/router';
 
-Vue.use(Vuex)
-
-export default new Vuex.Store({
+export default Vuex.createStore({
 	state: {
 		user: {
 			id:null,
@@ -119,4 +116,4 @@ export default new Vuex.Store({
 				return state.blocks.find(i=>i.id==state.editingBlockId);
 		}
 	}
-})
+});
