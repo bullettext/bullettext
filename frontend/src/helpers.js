@@ -68,6 +68,7 @@ window.getData = function(){
 
 document.addEventListener('click',function(e){
 
+	console.log('click',e);
 	if(e.target.matches('textarea')) {
 		console.log('textarea clicked');
 		console.log(e);

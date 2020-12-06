@@ -1,6 +1,13 @@
 <template>
 <div class="wrapper-app">
-	<aside>
+	<aside v-if="isAuthenticated">
+
+		<div class="global-search">
+			<form @submit.prevent>
+				<input type="text" @focus="openSearchMenu" @blur="closeSearchMenu">
+			</form>
+		</div>
+
 		<router-link to="/">Dashboard</router-link>
 	</aside>
 	<main>
@@ -23,6 +30,7 @@ export default {
 	},
 	data() {
 		return {
+			searchterm:'',
 		}
 	},
 	computed:{
@@ -34,6 +42,18 @@ export default {
 		},
 	},
 	methods:{
+		searchInput(){
+			console.log('searchinput');
+		},
+		openSearchMenu(){
+			window.openSearchMenu();
+		},
+		closeSearchMenu(){
+			window.closeSearchMenu();
+		},
+		doSearch(){
+			console.log('doSearch')
+		}
 
 	},
 

@@ -85,3 +85,20 @@ textarea + p { display:none; }
 .item.selected {
 	background: rgba(160, 143, 199, 0.4);
 }
+
+
+.global-search {
+	position:relative;
+}
+.menu-search {
+	position: absolute;
+	background-color: #fff;
+	min-height:30px;
+	width: 100%;
+	box-shadow: 1px 1px 3px rgba(20,20,20,0.4);
+	/* padding: 4px; */
+	top:100%;
+	left:0;
+	height:50vh;
+	max-height:300px;
+}

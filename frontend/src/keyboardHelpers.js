@@ -1,8 +1,23 @@
 window.edited = false;
 window.timerSave = null;
 
+
 document.addEventListener("DOMContentLoaded", function() {
 
+	/*
+	document.querySelector('.global-search').addEventListener('focus',function(e){
+		console.log(e.target);
+	});
+	*/
+
+	document.addEventListener('keyup',function(e){
+		if(isSearchMenuOpen){
+			handleSearch(e.target.value);
+			return;
+		}
+
+
+	});
 	document.addEventListener('keydown',function(e){
 
 		edited = true;
@@ -12,6 +27,10 @@ document.addEventListener("DOMContentLoaded", function() {
 			saveAll();
 			edited = false;
 		},5000);
+
+		if(isSearchMenuOpen){
+			return;
+		}
 
 
 		console.log(e.key)
