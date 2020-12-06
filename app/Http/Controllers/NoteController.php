@@ -7,11 +7,17 @@ use DB;
 use Response;
 use Log;
 use Arr;
+use App\Models\Note;
+use App\Models\Block;
+use App\Models\Reference;
+
+
 class NoteController extends Controller
 {
 
 	public function index(Request $request){
-		return \App\Note::where('user_id',Auth::user()->id)->orderBy('updated_at','desc')->get();
+
+		return Note::where('user_id',Auth::user()->id)->orderBy('updated_at','desc')->get();
 	}
 
 	public function create(Request $request){
@@ -20,11 +26,11 @@ class NoteController extends Controller
 			'user_id'=>Auth::user()->id,
 			'name'=>$input['name'],
 		];
-		$note = \App\Note::create($data);
+		$note = Note::create($data);
 		return $note;
 	}
 
-	public function delete(Request $request, \App\Note $note){
+	public function delete(Request $request, Note $note){
 		if($note->user_id != Auth::user()->id) abort(403);
 		$note->delete();
 		return;
@@ -33,20 +39,20 @@ class NoteController extends Controller
 
 	public function get(Request $request, $slug){
 		$user_id = Auth::user()->id;
-		$note = \App\Note::with('blocks','references')->where('user_id',$user_id)->where('slug',$slug)->first();
+		$note = Note::with('blocks','references')->where('user_id',$user_id)->where('slug',$slug)->first();
 		if($note == null) {
 			$data = [
 				'user_id'=>Auth::user()->id,
 				'name'=>ucfirst($slug),
 				'slug'=>$slug
 			];
-			$note = \App\Note::create($data);
+			$note = Note::create($data);
 			$note->load('blocks','references');
 		}
 		return $note;
 	}
 
-	public function saveBlocks(Request $request, \App\Note $note){
+	public function saveBlocks(Request $request, Note $note){
 		$user = Auth::user();
 		if($note->user_id != $user->id) abort(403);
 		$input = $request->input();
@@ -60,7 +66,7 @@ class NoteController extends Controller
 			$text = $postdata['text'];
 
 			if(!empty($postdata['id'])){
-				$block = \App\Block::where('note_id',$note->id)->findOrFail($postdata['id']);
+				$block = Block::where('note_id',$note->id)->findOrFail($postdata['id']);
 				$block->text = $text;
 				$block->order = $postdata['order'];
 				$block->save();
@@ -68,7 +74,7 @@ class NoteController extends Controller
 
 
 			} else {
-				$block = new \App\Block;
+				$block = new Block;
 				$block->text = $text;
 				$block->order = $postdata['order'];
 				$block->note_id = $note->id;
@@ -78,7 +84,7 @@ class NoteController extends Controller
 			}
 
 
-			\App\Reference::where('block_id',$block->id)->delete();
+			Reference::where('block_id',$block->id)->delete();
 
 
 			if(preg_match_all('/\[\[([^]]+)\]\]/',$text,$matches)) {
@@ -87,12 +93,12 @@ class NoteController extends Controller
 				foreach($matches[1] as $block_name){
 
 
-					$related_note = \App\Note::where(['name'=>$block_name,'user_id'=>$user->id])->first();
+					$related_note = Note::where(['name'=>$block_name,'user_id'=>$user->id])->first();
 					if($related_note == null) {
-						$related_note = \App\Note::create(['name'=>$block_name,'user_id'=>$user->id]);
+						$related_note = Note::create(['name'=>$block_name,'user_id'=>$user->id]);
 						$new_notes[] = $related_note;
 					}
-					\App\Reference::create([
+					Reference::create([
 						'note_id'=>$related_note->id,
 						'block_id'=>$block->id,
 					]);
@@ -108,7 +114,7 @@ class NoteController extends Controller
 			} else {
 				$block_id = $temp_ids[$postdata['temp_id']];
 			}
-			$block = \App\Block::findOrFail($block_id);
+			$block = Block::findOrFail($block_id);
 
 			$parent_id = $postdata['parent_id'];
 			if(preg_match('/^temp/',$parent_id)){
@@ -132,7 +138,7 @@ class NoteController extends Controller
 	}
 
 
-	public function update(Request $request, \App\Note $note){
+	public function update(Request $request, Note $note){
 		if($note->user_id != Auth::user()->id) abort(403);
 		$input = $request->input();
 

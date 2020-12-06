@@ -1,4 +1,4 @@
-import Vue from 'vue'
+import Vue, { createApp } from 'vue';
 import App from './App.vue'
 import axios from 'axios';
 import helpers from './helpers.js';
@@ -11,7 +11,6 @@ import store from '@/store';
 
 
 window.Vue = Vue;
-Vue.config.productionTip = false
 
 axios({
 	method: 'get',
@@ -22,10 +21,6 @@ axios({
 }).catch(()=>{
 	store.dispatch('authInitialized')
 }).finally(()=> {
-	window.vm = new Vue({
-		router,
-		store,
-		render: h => h(App),
-	}).$mount('#app')
+	window.vm = createApp(App).use(router).use(store).mount('#app')
  });
 

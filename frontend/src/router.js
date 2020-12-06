@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
+import { createRouter, createWebHistory } from 'vue-router'
 
-import Vue from 'vue'
-import Router from 'vue-router'
 import axios from 'axios';
 import store from '@/store';
 
@@ -13,12 +12,9 @@ import Login from './views/Login.vue'
 import Forgot from './views/Forgot.vue'
 import NewPassword from './views/NewPassword.vue'
 
-//import store from './store'
 
-Vue.use(Router)
-
-const router = new Router({
-	mode:'history',
+const router = createRouter({
+	history:createWebHistory(process.env.BASE_URL),
 	routes: [
 		{ path: '/', name: 'dashboard', component: Dashboard, meta: {restricted:true}, },
 
@@ -65,4 +61,4 @@ router.beforeEach((to, from, next) => {
 
 });
 
-export default router
+export default router;

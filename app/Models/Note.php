@@ -1,10 +1,12 @@
 <?php
 
-namespace App;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
 use Illuminate\Database\Eloquent\SoftDeletes;
+
+use App\Models\Note;
 
 use Str;
 use Auth;
@@ -21,15 +23,15 @@ class Note extends Model
 
 
 	public function user(){
-		return $this->belongsTo('\App\User');
+		return $this->belongsTo('\App\Models\User');
 	}
 
 	public function blocks(){
-		return $this->hasMany('\App\Block')->orderBy('order');
+		return $this->hasMany('\App\Models\Block')->orderBy('order');
 	}
 
 	public function references(){
-		return $this->belongsToMany('\App\Block','references','note_id','block_id');
+		return $this->belongsToMany('\App\Models\Block','references','note_id','block_id');
 	}
 
 	protected static function boot() {
@@ -47,7 +49,7 @@ class Note extends Model
 
 			$add = 0;
 			$slug_final = $slug;
-			while(\App\Note::where('user_id',$user_id)->where('slug',$slug_final)->count()) {
+			while(Note::where('user_id',$user_id)->where('slug',$slug_final)->count()) {
 				$slug_final = $slug.'-'.(++$add);
 			}
 			$model->slug = $slug_final;

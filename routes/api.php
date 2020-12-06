@@ -1,7 +1,10 @@
 <?php
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Route;
+
+use App\Http\Controllers\LoginController;
+use App\Http\Controllers\NoteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,29 +17,27 @@ use Illuminate\Support\Str;
 |
 */
 
+//Route::middleware('auth:api')->group(function(){
 
-Route::get('/users', 'LoginController@users');
-Route::get('/user', 'LoginController@user');
+    Route::get('/users', [LoginController::class,'users']);
+    Route::get('/user', [LoginController::class,'user']);
 
-Route::get('/logout', 'LoginController@logout');
+    Route::get('/logout', [LoginController::class,'logout']);
 
-Route::post('login', 'LoginController@login');
-Route::post('register','LoginController@register');
-Route::post('forgot','LoginController@forgot');
-Route::post('new-password','LoginController@newPassword');
+    Route::post('login', [LoginController::class,'login']);
+    Route::post('login', [LoginController::class, 'login']);
 
-Route::get('notes','NoteController@index');
+    Route::post('register',[LoginController::class,'register']);
+    Route::post('forgot',[LoginController::class,'forgot']);
+    Route::post('new-password',[LoginController::class,'newPassword']);
 
-Route::get('notes/{slug}','NoteController@get');
-Route::post('notes','NoteController@create');
-Route::post('notes/{note}','NoteController@update');
-Route::post('notes/save-blocks/{note}','NoteController@saveBlocks');
-Route::delete('notes/{note}','NoteController@delete');
+    Route::get('notes',[NoteController::class,'index']);
 
-/*
-Route::post('blocks/batch','BlockController@batchUpdate');
-Route::post('blocks/{block}','BlockController@update');
-Route::post('blocks','BlockController@create');
-Route::delete('blocks/{block}','BlockController@delete');
-*/
+    Route::get('notes/{slug}',[NoteController::class,'get']);
+    Route::post('notes',[NoteController::class,'create']);
+    Route::post('notes/{note}',[NoteController::class,'update']);
+    Route::post('notes/save-blocks/{note}',[NoteController::class,'saveBlocks']);
+    Route::delete('notes/{note}',[NoteController::class,'delete']);
+
+//});
 
