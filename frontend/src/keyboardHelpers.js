@@ -211,9 +211,13 @@ window.handleKeyDelete = function(e){
 
 		//if next block is a child, grab its text and merge with current block
 		if(nextBlock == block.querySelector('[data-block]')){
+			const childrensNextBlock = getChildrens(nextBlock);
 			var nextvalue = unmarked(nextBlock.querySelector('p').innerHTML);
 			nextBlock.parentNode.removeChild(nextBlock);
 			textarea.value += nextvalue;
+			if(childrensNextBlock) {
+				block.querySelector("ul").innerHTML = childrensNextBlock + block.querySelector("ul").innerHTML;
+			}
 			setInputHeight(textarea);
 		} else {
 			block.parentNode.removeChild(block);

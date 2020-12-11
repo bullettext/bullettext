@@ -215,6 +215,12 @@ window.getNextBlock = function(block){
 	return blocks[index+1];
 }
 
+window.getChildrens = function(element) {
+	const childrens = element.querySelector('ul');
+	if(childrens == null) return false;
+	return childrens.innerHTML;
+}
+
 window.selectNext = function(block){
 	var block = getNextBlock(block);
 	if(!block) return;
