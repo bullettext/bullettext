@@ -170,26 +170,43 @@ window.handleKeyBackspace = function(e){
 	var textarea = e.target;
 	if(textarea.selectionStart == 0 && textarea.selectionEnd==0) {
 		var block = textarea.closest('[data-block]');
-
 		//get previous
 		var prevBlock = getPrevBlock(block);
 		if(!prevBlock) return;
 
 		e.preventDefault();
-		//grab text,
-		var text = textarea.value;
 
-		var prevText = unmarked(prevBlock.querySelector('p').innerHTML);
+		const prevText = unmarked(prevBlock.querySelector('p').innerHTML);
+		const p = prevBlock.querySelector('p');
 
-		//delete previous block
-		prevBlock.parentNode.removeChild(prevBlock);
 
-		//append text
-		textarea.value = prevText + textarea.value;
-		setInputHeight(textarea);
+		const newTextarea = document.createElement('textarea');
+		newTextarea.value = prevText + textarea.value;
+		prevBlock.insertBefore(newTextarea, p);
+		newTextarea.focus();
+		newTextarea.selectionStart = prevText.length;
+		newTextarea.selectionEnd = prevText.length;
+		setInputHeight(newTextarea);
 
-		textarea.selectionStart = prevText.length;
-		textarea.selectionEnd = prevText.length;
+		const childrensCurrentBlock = getChildrens(block);
+
+		if(childrensCurrentBlock) {
+			let ul = prevBlock.querySelector("ul");
+			if(ul) {
+				ul.innerHTML = ul.innerHTML + childrensCurrentBlock;
+			} else {
+				ul = document.createElement('ul');
+				ul.innerHTML = childrensCurrentBlock;
+				prevBlock.appendChild(ul);
+
+			}
+		}
+
+		block.parentNode.removeChild(block);
+
+
+		return;
+		//delete current block
 
 	}
 }
@@ -279,8 +296,5 @@ window.handleShiftTab = function(e){
 	} else {
 		parentBlock.parentNode.appendChild(block);
 	}
-
 	$('textarea').focus();
-
-
 }
