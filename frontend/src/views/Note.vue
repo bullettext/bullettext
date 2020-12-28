@@ -72,6 +72,9 @@ export default {
 				hydrate(res.data.id, res.data.blocks);
 				if(res.data.blocks.length==0){
 					window.newBlock(res.data.id);
+				} else {
+					var firstBlock = document.querySelector('.blocks [data-block]');
+					if(firstBlock) editBlock(firstBlock);
 				}
 			})
 		});

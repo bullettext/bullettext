@@ -1,13 +1,10 @@
 <template>
 <div class="wrapper-app">
+	<nav v-if="isAuthenticated">
+		<div class="logo">Bullet</div>
+		<global-search />
+	</nav>
 	<aside v-if="isAuthenticated">
-
-		<div class="global-search">
-			<form @submit.prevent>
-				<input type="text" @focus="openSearchMenu" @blur="closeSearchMenu">
-			</form>
-		</div>
-
 		<router-link to="/">Dashboard</router-link>
 	</aside>
 	<main>
@@ -22,15 +19,17 @@
 
 
 import Loader from './components/Loader.vue';
+import GlobalSearch from './components/GlobalSearch.vue';
 
 export default {
 	name: 'app',
 	components: {
-		Loader
+		Loader,
+		GlobalSearch
 	},
 	data() {
 		return {
-			searchterm:'',
+
 		}
 	},
 	computed:{
@@ -42,18 +41,6 @@ export default {
 		},
 	},
 	methods:{
-		searchInput(){
-			console.log('searchinput');
-		},
-		openSearchMenu(){
-			window.openSearchMenu();
-		},
-		closeSearchMenu(){
-			window.closeSearchMenu();
-		},
-		doSearch(){
-			console.log('doSearch')
-		}
 
 	},
 
