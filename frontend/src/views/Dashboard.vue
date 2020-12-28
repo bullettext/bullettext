@@ -44,21 +44,8 @@ export default {
 
 		newNote(){
 			if(!this.note.name) return false;
-			this.$store.dispatch('startLoading');
-			var data = this.note;
-			axios({
-				method:'post',
-				url: '/api/notes',
-				data:data,
-			}).then((res) => {
-				this.$router.push({path:res.data.slug});
-				this.$store.dispatch('getNotesIndex');
-			}).finally(()=>{
-				this.$store.dispatch('stopLoading');
-			});
-
+			this.$store.dispatch('newNote',this.note.name);
 		}
-
 
 
 	},

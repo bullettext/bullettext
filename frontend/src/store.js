@@ -92,6 +92,22 @@ export default Vuex.createStore({
 
 
 		},
+		newNote({state},name){
+			this.dispatch('startLoading');
+			var data = {name:name};
+			return axios({
+				method:'post',
+				url: '/api/notes',
+				data:data,
+			}).then((res) => {
+				router.push({path:res.data.slug});
+				this.dispatch('getNotesIndex');
+				return res;
+			}).finally(()=>{
+				this.dispatch('stopLoading');
+			});
+
+		}
 
 	},
 

@@ -1,6 +1,10 @@
 <template>
 <div class="wrapper-app">
-	<aside>
+	<nav v-if="isAuthenticated">
+		<div class="logo">Bullet</div>
+		<global-search />
+	</nav>
+	<aside v-if="isAuthenticated">
 		<router-link to="/">Dashboard</router-link>
 	</aside>
 	<main>
@@ -15,14 +19,17 @@
 
 
 import Loader from './components/Loader.vue';
+import GlobalSearch from './components/GlobalSearch.vue';
 
 export default {
 	name: 'app',
 	components: {
-		Loader
+		Loader,
+		GlobalSearch
 	},
 	data() {
 		return {
+
 		}
 	},
 	computed:{
