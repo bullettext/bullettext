@@ -40,7 +40,46 @@ export default {
 		return {
 			note:{},
 			selectedIndex: -1,
-		};
+			functions: {
+				ArrowUp : (event) => {
+					this.functions.ArrowUpDown(event, -1);
+				},
+				ArrowDown: (event) => {
+					this.functions.ArrowUpDown(event, +1);
+				},
+				ArrowUpDown: (event, move) => {
+					if(event.shiftKey && event.altKey){
+						let removed = this.note.blocks.splice(this.selectedIndex,1);
+						this.note.blocks.splice(this.selectedIndex + move,0,removed[0]);
+					}
+					var cursorPosition = this.$refs.textarea.selectionStart;
+					this.selectedIndex += move;
+					this.focusTextarea(cursorPosition);
+				},
+				Tab: (event) => {
+					let move = +1;
+					if(event.shiftKey) move = -1;
+					this.note.blocks[this.selectedIndex].level += move;
+					if(this.note.blocks[this.selectedIndex].level < 0) {
+						this.note.blocks[this.selectedIndex].level = 0;
+					}
+				},
+				Delete: (event) => {
+					let textarea = this.$refs.textarea;
+					if(textarea.selectionStart == textarea.value.length && textarea.selectionEnd == textarea.value.length) {
+						let nextBlock = this.nextBlock();
+						if(!nextBlock) return;
+
+						const size = this.currentBlock().text.length;
+						this.currentBlock().text += nextBlock.text;
+						this.removeBlock(+1);
+						textarea.selectionStart = size;
+						textarea.selectionEnd = size;
+					}
+
+				}
+			}
+		}
 	},
 	computed: {
 		notes() {
@@ -63,28 +102,26 @@ export default {
 				marginLeft: `${20*level}px`
 			};
 		},
-		onKeydown(e){
-			if(e.key=='ArrowUp'){
-				e.preventDefault();
-				if(e.shiftKey && e.altKey){
-					//mover bloco pra cima
-					let removed = this.note.blocks.splice(this.selectedIndex,1);
-					this.note.blocks.splice(this.selectedIndex-1,0,removed[0]);
-				}
-				var cursorPosition = this.$refs.textarea.selectionStart;
-				this.selectedIndex--;
-				this.focusTextarea(cursorPosition);
+		onKeydown(event){
+			if(typeof this.functions[event.key] === 'function'){
+				event.preventDefault();
+				console.log(`Key down: ${event.key}\n---`);
+				this.functions[event.key](event);
 			}
-			if(e.key=='ArrowDown'){
-				e.preventDefault();
-				if(e.shiftKey && e.altKey){
-					let removed = this.note.blocks.splice(this.selectedIndex,1);
-					this.note.blocks.splice(this.selectedIndex+1,0,removed[0]);
-				}
-				var cursorPosition = this.$refs.textarea.selectionStart;
-				this.selectedIndex++;
-				this.focusTextarea(cursorPosition);
-			}
+		},
+		currentBlock() {
+			return this.note.blocks[this.selectedIndex];
+		},
+		nextBlock() {
+			return this.note.blocks[this.selectedIndex + 1];
+		},
+		previusBlock() {
+			return this.note.blocks[this.selectedIndex - 1];
+		},
+		removeBlock(nearBy) {
+			if(!nearBy) nearBy = 0;
+			let removed = this.note.blocks.splice(this.selectedIndex + nearBy,1);
+			return removed[0];
 		},
 		focusTextarea(cursorPosition){
 			console.log('cursorPosition',cursorPosition);
