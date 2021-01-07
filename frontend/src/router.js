@@ -34,9 +34,9 @@ router.beforeEach((to, from, next) => {
 
 	console.log('route beforeeach to: ',to.path);
 
-	if(edited && $('[data-note]')){
-		saveAll();
-	}
+	//if(edited && $('[data-note]')){
+	//	saveAll();
+	//}
 
 	if(to.path=='/logout'){
 

@@ -1,12 +1,18 @@
 <template>
 	<div>
-		<div class="container" v-if="note_id" :data-note="note_id">
+		<div class="container" v-if="note.id" :data-note="note.id">
 			<button onclick="saveAll()">save</button>
 			<div class="my-3">
 				<h1>{{ note.name }}</h1>
 			</div>
+			<p>selectedIndex:{{selectedIndex}}</p>
 			<div class="blocks">
-				<div class="vanilla"><ul></ul></div>
+				<ul>
+					<li v-for="(block,index) in note.blocks" :key="block.id" :style="styleBlock(block.level)">
+						<textarea v-if="selectedIndex === index" v-model="block.text" ref="textarea" @keydown="onKeydown($event)"></textarea>
+						<p @click="selectBlock(index,$event)">{{ block.text }}</p>
+					</li>
+				</ul>
 			</div>
 
 			<ul class="references" v-if="note.references">
@@ -16,33 +22,29 @@
 				</li>
 			</ul>
 
-
-
 		</div>
 	</div>
 </template>
 <script>
 import axios from "axios";
-import BlockList from "@/components/BlockList";
+//import BlockList from "@/components/BlockList";
 
 export default {
 	name: "note",
 	components: {
-		BlockList
+	//	BlockList
 	},
 
 	props: ["slug"],
 	data() {
 		return {
-			note_id:null,
+			note:{},
+			selectedIndex: -1,
 		};
 	},
 	computed: {
 		notes() {
 			return this.$store.getters.notes;
-		},
-		note() {
-			return this.$store.state.note;
 		},
 		references(){
 			if(!this.notes || !this.note.references) return false;
@@ -56,27 +58,58 @@ export default {
 		}
 	},
 	methods: {
+		styleBlock(level) {
+			return 	{
+				marginLeft: `${20*level}px`
+			};
+		},
+		onKeydown(e){
+			if(e.key=='ArrowUp'){
+				e.preventDefault();
+				if(e.shiftKey && e.altKey){
+					//mover bloco pra cima
+					let removed = this.note.blocks.splice(this.selectedIndex,1);
+					this.note.blocks.splice(this.selectedIndex-1,0,removed[0]);
+				}
+				var cursorPosition = this.$refs.textarea.selectionStart;
+				this.selectedIndex--;
+				this.focusTextarea(cursorPosition);
+			}
+			if(e.key=='ArrowDown'){
+				e.preventDefault();
+				if(e.shiftKey && e.altKey){
+					let removed = this.note.blocks.splice(this.selectedIndex,1);
+					this.note.blocks.splice(this.selectedIndex+1,0,removed[0]);
+				}
+				var cursorPosition = this.$refs.textarea.selectionStart;
+				this.selectedIndex++;
+				this.focusTextarea(cursorPosition);
+			}
+		},
+		focusTextarea(cursorPosition){
+			console.log('cursorPosition',cursorPosition);
+			this.$nextTick(function(){
+				console.log('textarea depois',this.$refs.textarea);
+				this.$refs.textarea.focus();
+				this.$refs.textarea.selectionStart = cursorPosition;
+				this.$refs.textarea.selectionEnd = cursorPosition;
+			});
+		},
+		selectBlock(index,e){
+			this.selectedIndex = index;
 
-		addHistory(){ window.addHistory() },
-		revertHistory(){ window.revertHistory() },
+			var cursorPosition = window.getSelection().getRangeAt(0).endOffset;
+			this.focusTextarea(cursorPosition);
+
+		},
 	},
 	mounted() {
-
 		if(!this.notes){
 			this.$store.dispatch('getNotesIndex');
 		}
 
 		this.$store.dispatch("getNote", this.slug).then(res => {
-			this.note_id = res.data.id;
-			this.$nextTick(()=>{
-				hydrate(res.data.id, res.data.blocks);
-				if(res.data.blocks.length==0){
-					window.newBlock(res.data.id);
-				} else {
-					var firstBlock = document.querySelector('.blocks [data-block]');
-					if(firstBlock) editBlock(firstBlock);
-				}
-			})
+			this.note = res.data;
 		});
 	},
 };
