@@ -9,7 +9,13 @@
 			<div class="blocks">
 				<ul>
 					<li v-for="(block,index) in note.blocks" :key="block.id" :style="styleBlock(block.level)">
-						<textarea v-if="selectedIndex === index" v-model="block.text" ref="textarea" @keydown="onKeydown($event)"></textarea>
+						<textarea
+							v-if="selectedIndex === index"
+							v-model="block.text"
+							ref="textarea"
+							@input="setInputHeight()"
+							@keydown="onKeydown($event)"
+						/>
 						<p @click="selectBlock(index,$event)">{{ block.text }}</p>
 					</li>
 				</ul>
@@ -40,14 +46,18 @@ export default {
 		return {
 			note:{},
 			selectedIndex: -1,
-			functions: {
+			keyUpFunctions: {
 				ArrowUp : (event) => {
-					this.functions.ArrowUpDown(event, -1);
+					this.keyDownFunctions.ArrowUpDown(event, -1);
 				},
 				ArrowDown: (event) => {
-					this.functions.ArrowUpDown(event, +1);
+					if(this.$refs.textarea.selectionStart == this.currentBlock().text.length){
+						this.keyDownFunctions.ArrowUpDown(event, +1);
+					}
+
 				},
 				ArrowUpDown: (event, move) => {
+					event.preventDefault();
 					if(event.shiftKey && event.altKey){
 						let removed = this.note.blocks.splice(this.selectedIndex,1);
 						this.note.blocks.splice(this.selectedIndex + move,0,removed[0]);
@@ -56,7 +66,19 @@ export default {
 					this.selectedIndex += move;
 					this.focusTextarea(cursorPosition);
 				},
+			},
+			keyDownFunctions: {
+				ArrowUp : (event) => {
+					this.keyDownFunctions.ArrowUpDown(event, -1);
+				},
+				ArrowDown: (event) => {
+					if(this.$refs.textarea.selectionStart == this.currentBlock().text.length){
+						this.keyDownFunctions.ArrowUpDown(event, +1);
+					}
+
+				},
 				Tab: (event) => {
+					event.preventDefault();
 					let move = +1;
 					if(event.shiftKey) move = -1;
 					this.note.blocks[this.selectedIndex].level += move;
@@ -66,15 +88,51 @@ export default {
 				},
 				Delete: (event) => {
 					let textarea = this.$refs.textarea;
-					if(textarea.selectionStart == textarea.value.length && textarea.selectionEnd == textarea.value.length) {
+					if(textarea.selectionStart == textarea.value.length) {
 						let nextBlock = this.nextBlock();
 						if(!nextBlock) return;
 
+						event.preventDefault();
 						const size = this.currentBlock().text.length;
 						this.currentBlock().text += nextBlock.text;
 						this.removeBlock(+1);
-						textarea.selectionStart = size;
-						textarea.selectionEnd = size;
+						this.focusTextarea(size);
+					}
+
+				},
+				Backspace: (event) => {
+					let textarea = this.$refs.textarea;
+					if(textarea.selectionEnd == 0) {
+						let previusBlock = this.previusBlock();
+						if(!previusBlock) return;
+
+						event.preventDefault();
+						const size = previusBlock.text.length;
+						previusBlock.text += this.currentBlock().text;
+						this.removeBlock();
+						this.selectedIndex--;
+						this.focusTextarea(size);
+					}
+				},
+				Enter: (event) => {
+					if(event.shiftKey) return;
+					event.preventDefault();
+					// if(hasMenu())
+					if(event.ctrlKey) {
+						this.setTodo();
+					} else {
+						let start = this.$refs.textarea.selectionStart;
+						let textStart = this.currentBlock().text.substr(0, start);
+						let textEnd = this.currentBlock().text.substr(start);
+						this.currentBlock().text = textStart;
+						let newBlock = {
+							text: textEnd,
+							parent_id: this.currentBlock().parent_id,
+							level: this.currentBlock().level
+						};
+						this.note.blocks.splice( this.selectedIndex+1, 0, newBlock );
+						this.selectedIndex++;
+						this.focusTextarea(0);
 					}
 
 				}
@@ -94,7 +152,7 @@ export default {
 				return block;
 			})
 
-		}
+		},
 	},
 	methods: {
 		styleBlock(level) {
@@ -103,10 +161,15 @@ export default {
 			};
 		},
 		onKeydown(event){
-			if(typeof this.functions[event.key] === 'function'){
-				event.preventDefault();
+			if(typeof this.keyDownFunctions[event.key] === 'function'){
 				console.log(`Key down: ${event.key}\n---`);
-				this.functions[event.key](event);
+				this.keyDownFunctions[event.key](event);
+			}
+		},
+		onKeyup(event){
+			if(typeof this.keyUpnFunctions[event.key] === 'function'){
+				console.log(`Key up: ${event.key}\n---`);
+				this.keyUpFunctions[event.key](event);
 			}
 		},
 		currentBlock() {
@@ -130,7 +193,12 @@ export default {
 				this.$refs.textarea.focus();
 				this.$refs.textarea.selectionStart = cursorPosition;
 				this.$refs.textarea.selectionEnd = cursorPosition;
+				this.setInputHeight();
 			});
+		},
+		setInputHeight() {
+			this.$refs.textarea.style.height = "1.5em";
+			this.$refs.textarea.style.height = `${this.$refs.textarea.scrollHeight}px`;
 		},
 		selectBlock(index,e){
 			this.selectedIndex = index;
@@ -139,6 +207,18 @@ export default {
 			this.focusTextarea(cursorPosition);
 
 		},
+		setTodo() {
+			let text = this.currentBlock().text;
+
+			if (!text.match(/^\[\[(TODO|DONE)\]\]/)) {
+				text = "[[TODO]] " + text;
+			} else if (text.match(/^\[\[TODO\]\]/)) {
+				text = text.replace(/^\[\[TODO\]\]/, "[[DONE]]");
+			} else if (text.match(/^\[\[DONE\]\]/)) {
+				text = text.replace(/^\[\[DONE\]\] */, "");
+			}
+			this.currentBlock().text = text;
+		}
 	},
 	mounted() {
 		if(!this.notes){
