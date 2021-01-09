@@ -48,7 +48,6 @@ export default {
 			note:{},
 			selectedIndex: -1,
 			keyDownFunctions: {
-
 				ArrowUp : (event) => {
 					if(!this.previusBlock) return;
 					if(!this.isFirstLine()) return;
@@ -64,12 +63,9 @@ export default {
 					//caso o proximo bloco tenha +1 linha e o cursorposition do current block é maior que o tamanho da primeira linha, define o tamanho maximo como o length da primeira linha para evitar que o cursor seja posicionado na segunda linha
 					relativeCursorPosition = Math.min(relativeCursorPosition,this.nextBlock.text.split("\n")[0].length);
 
-					setTimeout(()=>{ //com o setTimeout a gente vai saber se o cursor pulou pro final da linha
-						if(this.cursorPosition() == this.currentBlock.text.length) {
-							this.selectedIndex++;
-							this.focusTextarea(relativeCursorPosition);
-						}
-					},0);
+					this.selectedIndex++;
+					this.focusTextarea(relativeCursorPosition);
+
 				},
 				ShiftAltArrowUp : (event) => {
 					if(!this.previusBlock) return;
@@ -167,7 +163,6 @@ export default {
 		},
 	},
 	methods: {
-
 		cursorPosition(newval){
 			if(!this.$refs.textarea) return 0;
 			if(newval===undefined){
@@ -266,8 +261,8 @@ export default {
 		},
 		marked(text){
 			if(!text) return '';
-			text = text.replace(/\[\[TODO\]\]/g,'<span class="checkbox"></span>')
-			text = text.replace(/\[\[DONE\]\]/g,'<span class="checkbox checked"></span>')
+			text = text.replace(/^\[\[TODO\]\]/,'<span class="checkbox"></span>')
+			text = text.replace(/^\[\[DONE\]\]/,'<span class="checkbox checked"></span>')
 
 			text = text.replace(/\*\*([^\*]+)\*\*/g,'<strong>$1</strong>')
 			text = text.replace(/__([^_]+)__/g,'<strong>$1</strong>')
