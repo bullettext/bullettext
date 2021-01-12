@@ -5,7 +5,7 @@
 			<div class="my-3">
 				<h1>{{ note.name }}</h1>
 			</div>
-			<p>selectedIndex:{{selectedIndex}}</p>
+			<p>selectedIndex:{{ selectedIndex }}</p>
 
 			<div class="blocks">
 				<ul>
@@ -13,7 +13,7 @@
 						<textarea
 							v-if="selectedIndex === index"
 							v-model="block.text"
-							ref="textarea"
+							ref="textareaDOM"
 							@input="setInputHeight"
 							@keydown="onKeydown"
 						/>
@@ -22,7 +22,7 @@
 				</ul>
 			</div>
 
-			<ul class="references" v-if="note.references">
+			<ul class="references" v-if="references">
 				<li v-for="(block,index) in references" :key="index">
 					<router-link :to="'/'+block.note.slug">{{block.note.name}}</router-link>
 					<p>{{block.text}}</p>
@@ -34,212 +34,216 @@
 </template>
 <script>
 import axios from "axios";
+import { ref, reactive, computed, onMounted, toRefs, nextTick } from 'vue';
+import { useStore } from 'vuex';
+
+// import { count, increment, alertMessage } from '../plugins/Editor';
 //import BlockList from "@/components/BlockList";
 
 export default {
-	name: "note",
-	components: {
-	//	BlockList
-	},
-
 	props: ["slug"],
-	data() {
-		return {
-			note:{},
+	setup(props, context) {
+		const store = useStore();
+
+		const state = reactive({
+			note: {
+				blocks: []
+			 },
+			textareaDOM: null,
 			selectedIndex: -1,
 			keyDownFunctions: {
 				ArrowUp : (event) => {
-					if(!this.previusBlock) return;
-					if(!this.isFirstLine()) return;
+					if(!computedFunctions.previusBlock) return;
+					if(!isFirstLine()) return;
 					event.preventDefault();
-					this.selectedIndex--;
-					let relativeCursorPosition = this.cursorPosition() + this.cursorOffset();
-					this.focusTextarea(relativeCursorPosition);
+					state.selectedIndex--;
+					let relativeCursorPosition = cursorPosition() + cursorOffset();
+					focusTextarea(relativeCursorPosition);
 				},
 				ArrowDown: (event) => {
-					if(!this.nextBlock) return;
-					if(!this.isLastLine()) return;
-					let relativeCursorPosition = this.cursorPosition() - this.cursorOffset();
+					if(!computedFunctions.nextBlock) return;
+					if(!isLastLine()) return;
+					let relativeCursorPosition = cursorPosition() - cursorOffset();
 					//caso o proximo bloco tenha +1 linha e o cursorposition do current block é maior que o tamanho da primeira linha, define o tamanho maximo como o length da primeira linha para evitar que o cursor seja posicionado na segunda linha
-					relativeCursorPosition = Math.min(relativeCursorPosition,this.nextBlock.text.split("\n")[0].length);
+					relativeCursorPosition = Math.min(relativeCursorPosition,computedFunctions.nextBlock.text.split("\n")[0].length);
 
-					this.selectedIndex++;
-					this.focusTextarea(relativeCursorPosition);
+					state.selectedIndex++;
+					focusTextarea(relativeCursorPosition);
 
 				},
 				ShiftAltArrowUp : (event) => {
-					if(!this.previusBlock) return;
+					if(!computedFunctions.previusBlock) return;
 					event.preventDefault();
-					this.insertBlock(this.selectedIndex-1,this.removeBlock());
-					this.selectedIndex--;
-					this.focusTextarea(this.cursorPosition());
+					insertBlock(state.selectedIndex-1,removeBlock());
+					state.selectedIndex--;
+					focusTextarea(cursorPosition());
 				},
 				ShiftAltArrowDown: (event) => {
-					if(!this.nextBlock) return;
+					if(!computedFunctions.nextBlock) return;
 					event.preventDefault();
-					this.insertBlock(this.selectedIndex+1,this.removeBlock());
-					this.selectedIndex++;
-					this.focusTextarea(this.cursorPosition());
+					insertBlock(state.selectedIndex+1,removeBlock());
+					state.selectedIndex++;
+					focusTextarea(cursorPosition());
 				},
-
 				Tab: (event) => {
 					event.preventDefault();
-					if(!this.previusBlock) return;
-					this.currentBlock.level = Math.min(this.previusBlock.level+1,this.currentBlock.level+1);
+					if(!computedFunctions.previusBlock) return;
+					computedFunctions.currentBlock.level = Math.min(computedFunctions.previusBlock.level+1,computedFunctions.currentBlock.level+1);
 				},
 				ShiftTab: (event) => {
 					event.preventDefault();
-					if(!this.previusBlock) return;
-					this.currentBlock.level	= Math.max(this.currentBlock.level-1,0);
+					if(!computedFunctions.previusBlock) return;
+					computedFunctions.currentBlock.level	= Math.max(computedFunctions.currentBlock.level-1,0);
 				},
 				Delete: (event) => {
-					if(this.cursorPosition() !== this.currentBlock.text.length) return;
-					if(!this.nextBlock) return;
+					if(cursorPosition() !== computedFunctions.currentBlock.text.length) return;
+					if(!computedFunctions.nextBlock) return;
 					event.preventDefault();
-					const size = this.currentBlock.text.length;
-					this.currentBlock.text += this.nextBlock.text;
-					this.removeBlock(+1);
-					this.focusTextarea(size);
+					const size = computedFunctions.currentBlock.text.length;
+					computedFunctions.currentBlock.text += computedFunctions.nextBlock.text;
+					removeBlock(+1);
+					focusTextarea(size);
 				},
 				ShiftDelete: (event) => {
 					event.preventDefault();
-					this.removeBlock();
-					this.focusTextarea(0);
+					removeBlock();
+					focusTextarea(0);
 				},
 				Backspace: (event) => {
-					if(this.cursorPosition() !== 0) return;
-					if(!this.previusBlock) return;
+					if(cursorPosition() !== 0) return;
+					if(!computedFunctions.previusBlock) return;
 					event.preventDefault();
-					const size = this.previusBlock.text.length;
-					this.previusBlock.text += this.currentBlock.text;
-					this.removeBlock();
-					this.selectedIndex--;
-					this.focusTextarea(size);
+					const size = computedFunctions.previusBlock.text.length;
+					computedFunctions.previusBlock.text += computedFunctions.currentBlock.text;
+					removeBlock();
+					state.selectedIndex--;
+					focusTextarea(size);
 				},
 				Enter: (event) => {
 					event.preventDefault();
 					// if(hasMenu())
-					let start = this.cursorPosition();
-					let textStart = this.currentBlock.text.substr(0, start);
-					let textEnd = this.currentBlock.text.substr(start);
-					this.currentBlock.text = textStart;
+					let start = cursorPosition();
+					let textStart = computedFunctions.currentBlock.text.substr(0, start);
+					let textEnd = computedFunctions.currentBlock.text.substr(start);
+					computedFunctions.currentBlock.text = textStart;
 					let newBlock = {
 						text: textEnd,
-						parent_id: this.currentBlock.parent_id,
-						level: this.currentBlock.level
+						parent_id: computedFunctions.currentBlock.parent_id,
+						level: computedFunctions.currentBlock.level
 					};
-					this.insertBlock( this.selectedIndex+1, newBlock );
-					this.selectedIndex++;
-					this.focusTextarea(0);
+					insertBlock( state.selectedIndex+1, newBlock );
+					state.selectedIndex++;
+					focusTextarea(0);
 				},
 				CtrlEnter: (event) => {
-					this.setTodo();
+					setTodo();
 				},
-			}
-		}
-	},
-	computed: {
-		notes() {
-			return this.$store.getters.notes;
-		},
-		currentBlock() {
-			return this.note.blocks[this.selectedIndex];
-		},
-		nextBlock() {
-			return this.note.blocks[this.selectedIndex + 1];
-		},
-		previusBlock() {
-			return this.note.blocks[this.selectedIndex - 1];
-		},
-		references(){
-			if(!this.notes || !this.note.references) return false;
-			var blocks = this.note.references;
+			},
+		});
 
-			return blocks.map(block=>{
-				block.note = this.notes[block.note_id];
-				return block;
+		const computedFunctions = reactive({
+			currentBlock: computed(() => {
+				console.log('found');
+				return state.note.blocks[state.selectedIndex];
+			}),
+			notes: computed(() => {
+				return store.getters.notes;
+			}),
+			nextBlock: computed(() => {
+				return state.note.blocks[state.selectedIndex + 1];
+			}),
+			previusBlock: computed(() => {
+				return state.note.blocks[state.selectedIndex - 1];
+			}),
+			references: computed(() => {
+				if(!notes || !state.note.references) return false;
+				var blocks = state.note.references;
+				return blocks.map(block=>{
+					block.note = notes[block.note_id];
+					return block;
+				})
 			})
+		});
 
-		},
-	},
-	methods: {
-		cursorPosition(newval){
-			if(!this.$refs.textarea) return 0;
+		function cursorPosition(newval) {
+			if(!state.textareaDOM) return 0;
 			if(newval===undefined){
-				return this.$refs.textarea.selectionStart;
+				return state.textareaDOM.selectionStart;
 			}
-			this.$refs.textarea.selectionStart = newval;
-			this.$refs.textarea.selectionEnd = newval;
-		},
-		cursorOffset(){
-			let lines = this.currentBlock.text.split("\n");
+			state.textareaDOM.selectionStart = newval;
+			state.textareaDOM.selectionEnd = newval;
+		}
+
+		const cursorOffset = () =>{
+			let lines = computedFunctions.currentBlock.text.split("\n");
 			lines.pop();
 			return lines.join("\n").length
 			//let match = text.match(/^([\s\S]+)\n/); return match?match.pop().length:0;
-		},
-		isFirstLine(){
-			let lines = this.currentBlock.text.split("\n");
-			return lines[0].length >= this.cursorPosition();
-		},
-		isLastLine(){
-			let lines = this.currentBlock.text.split("\n");
+		}
+		const isFirstLine = () =>{
+			let lines = computedFunctions.currentBlock.text.split("\n");
+			return lines[0].length >= cursorPosition();
+		}
+		const isLastLine = () =>{
+			console.log('IsLastLine');
+			let lines = computedFunctions.currentBlock.text.split("\n");
 			lines.pop();
-			return lines.join("\n").length <= this.cursorPosition();
-		},
-		styleBlock(level) {
+			return lines.join("\n").length <= cursorPosition();
+		}
+		const styleBlock = (level) => {
 			return 	{
 				marginLeft: `${20*level}px`
 			};
-		},
-		onKeydown(event){
+		}
+		const onKeydown = (event) => {
 			let command = '';
 			if(event.ctrlKey) command += 'Ctrl';
 			if(event.shiftKey) command += 'Shift';
 			if(event.altKey) command += 'Alt';
 			command += event.key;
 
-			if(typeof this.keyDownFunctions[command] === 'function'){
+			if(typeof state.keyDownFunctions[command] === 'function'){
 				console.log(`Key down: ${command}\n---`);
-				this.keyDownFunctions[command](event);
+				state.keyDownFunctions[command](event);
 			}
-		},
-		removeBlock(nearBy) {
+		}
+		const removeBlock = (nearBy) => {
 			if(!nearBy) nearBy = 0;
-			let removed = this.note.blocks.splice(this.selectedIndex + nearBy,1);
+			let removed = state.note.blocks.splice(state.selectedIndex + nearBy,1);
 			return removed[0];
-		},
-		insertBlock(index,block) {
-			this.note.blocks.splice(index,0,block);
-		},
-		focusTextarea(cursorPosition){
-			console.log('cursorPosition',cursorPosition);
-			this.$nextTick(function(){
-				console.log('textarea depois',this.$refs.textarea);
-				this.$refs.textarea.focus();
-				this.cursorPosition(cursorPosition)
-				this.setInputHeight();
+		}
+		const insertBlock = (index,block) => {
+			state.note.blocks.splice(index,0,block);
+		}
+		const focusTextarea = (position) => {
+			console.log('position',position);
+			nextTick(function() {
+				console.log('textarea depois',state.textareaDOM);
+				state.textareaDOM.focus();
+				cursorPosition(position);
+				setInputHeight();
 			});
-		},
-		setInputHeight() {
-			this.$refs.textarea.style.height = "1.5em";
-			this.$refs.textarea.style.height = `${this.$refs.textarea.scrollHeight}px`;
-		},
-		selectBlock(index,e){
-			this.selectedIndex = index;
+		}
+		const setInputHeight = () => {
+			state.textareaDOM.style.height = "1.5em";
+			state.textareaDOM.style.height = `${state.textareaDOM.scrollHeight}px`;
+		}
+		const selectBlock = (index) => {
+			state.selectedIndex = index;
 
-			var cursorPosition = window.getSelection().getRangeAt(0).endOffset;
-			this.focusTextarea(cursorPosition);
-		},
-		onClickBlock(index,event){
+			let position = window.getSelection().getRangeAt(0).endOffset;
+			focusTextarea(position);
+		}
+		const onClickBlock = (index,event) => {
 			if(event.target.matches('.checkbox')){
-				let block = this.note.blocks[index];
-				this.toggleCheckbox(block)
+				let block = note.blocks[index];
+				toggleCheckbox(block)
 				return;
 			}
-			this.selectBlock(index,event);
-		},
-		setTodo() {
-			let text = this.currentBlock.text;
+			selectBlock(index,event);
+		}
+		const setTodo = () => {
+			let text = computedFunctions.currentBlock.text;
 
 			if (!text.match(/^\[\[(TODO|DONE)\]\]/)) {
 				text = "[[TODO]] " + text;
@@ -248,9 +252,9 @@ export default {
 			} else if (text.match(/^\[\[DONE\]\]/)) {
 				text = text.replace(/^\[\[DONE\]\] */, "");
 			}
-			this.currentBlock.text = text;
-		},
-		toggleCheckbox(block) {
+			computedFunctions.currentBlock.text = text;
+		}
+		const toggleCheckbox = (block) => {
 			let text = block.text;
 			if (text.match(/^\[\[TODO\]\]/)) {
 				text = text.replace(/^\[\[TODO\]\]/, "[[DONE]]");
@@ -258,42 +262,45 @@ export default {
 				text = text.replace(/^\[\[DONE\]\]/, "[[TODO]]");
 			}
 			block.text = text;
-		},
-		marked(text){
+		}
+		const marked = (text) => {
 			if(!text) return '';
-			text = text.replace(/^\[\[TODO\]\]/,'<span class="checkbox"></span>')
-			text = text.replace(/^\[\[DONE\]\]/,'<span class="checkbox checked"></span>')
+			text = text.replace(/^\[\[TODO\]\]/,'<span class="checkbox"></span>');
+			text = text.replace(/^\[\[DONE\]\]/,'<span class="checkbox checked"></span>');
 
-			text = text.replace(/\*\*([^\*]+)\*\*/g,'<strong>$1</strong>')
-			text = text.replace(/__([^_]+)__/g,'<strong>$1</strong>')
-			text = text.replace(/~~([^~]+)~~/g,'<del>$1</del>')
+			text = text.replace(/\*\*([^\*]+)\*\*/g,'<strong>$1</strong>');
+			text = text.replace(/__([^_]+)__/g,'<strong>$1</strong>');
+			text = text.replace(/~~([^~]+)~~/g,'<del>$1</del>');
 
-			text = text.replace(/\*([^\*]+)\*/g,'<em>$1</em>')
-			text = text.replace(/_([^_]+)_/g,'<em>$1</em>')
-/*
-			var matches = text.match(/\[\[([^\]]+)\]\]/g);
-			if(matches) matches.forEach(match=>{
-				var note_name = match.replace(/[\[\]]/g,'');
-				var note = store.state.notes.find(note=>{
-					return note.name == note_name
-				});
-				if(!note) return;
-				text = text.replace(match,`<a class="reference" href="/${note.slug}">${match}</a>`);
-			});
-*/
+			text = text.replace(/\*([^\*]+)\*/g,'<em>$1</em>');
+			text = text.replace(/_([^_]+)_/g,'<em>$1</em>');
 			return text;
 		}
-	},
-	mounted() {
-		if(!this.notes){
-			this.$store.dispatch('getNotesIndex');
-		}
 
-		this.$store.dispatch("getNote", this.slug).then(res => {
-			this.note = res.data;
+		onMounted(() => {
+			if(!notes){
+				store.dispatch('getNotesIndex');
+			}
+
+			store.dispatch("getNote", props.slug).then(res => {
+				state.note = res.data;
+			});
 		});
-	},
+
+		const { note, selectedIndex, textareaDOM } = toRefs(state);
+		const { references, notes } = toRefs(computedFunctions);
+		return {
+			references,
+			notes,
+			note,
+			selectedIndex,
+			styleBlock,
+			textareaDOM,
+			marked,
+			onClickBlock,
+			setInputHeight,
+			onKeydown
+		}
+	}
 };
 </script>
-
-<style scoped></style>
