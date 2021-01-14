@@ -16,11 +16,11 @@ axios({
 	method: 'get',
 	url: '/api/user',
 }).then((res)=>{
-	store.dispatch('setUser',res.data)
-	store.dispatch('authInitialized')
+	store.setUser(res.data);
 }).catch(()=>{
-	store.dispatch('authInitialized')
 }).finally(()=> {
-	window.vm = createApp(App).use(router).use(store).mount('#app')
- });
-
+	store.authInitialized();
+	const app = createApp(App);
+	app.use(router);
+	app.mount('#app');
+});

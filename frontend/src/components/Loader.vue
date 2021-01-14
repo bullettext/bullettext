@@ -73,25 +73,29 @@
   0% { transform: rotate(0deg);}
   100% { transform: rotate(360deg);}
 }
-
-
-
-	</style>
+</style>
 
 
 <script>
+  import { computed } from 'vue';
+  import store from '@/store';
 
 	export default {
-		computed:{
+    setup(){
+      const isLoading = computed(()=>{
+        return store.state.loading;
+      });
 
-			isLoading(){
-				return this.$store.state.loading
-			},
-			loadingMessage(){
-				return this.$store.state.loadingMessage
-			}
+      const loadingMessage = computed(()=>{
+        return store.state.loadingMessage;
+      });
 
-		}
+      return {
+        isLoading,
+        loadingMessage
+      }
+    }
+
 	}
 
 </script>

@@ -5,29 +5,17 @@
 			<div class="my-3">
 				<h1>{{ note.name }}</h1>
 			</div>
-			<p>selectedIndex:{{ selectedIndex }}</p>
-
+			INDEX: {{selectedIndex}}
 			<div class="blocks">
-				<ul>
-					<li v-for="(block,index) in note.blocks" :key="block.id" :style="styleBlock(block.level)">
-						<textarea
-							v-if="selectedIndex === index"
-							v-model="block.text"
-							ref="textareaDOM"
-							@input="setInputHeight"
-							@keydown="onKeydown"
-						/>
-						<p @click="onClickBlock(index,$event)" v-html="marked(block.text)"></p>
-					</li>
-				</ul>
+				<block-element
+					v-for="(block, index) in note.blocks"
+					:key="index"
+					:block="block"
+					@onKeydown="onKeydown"
+				/>
 			</div>
 
-			<ul class="references" v-if="references">
-				<li v-for="(block,index) in references" :key="index">
-					<router-link :to="'/'+block.note.slug">{{block.note.name}}</router-link>
-					<p>{{block.text}}</p>
-				</li>
-			</ul>
+			<list-references v-if="note.references" :references="note.references" />
 
 		</div>
 	</div>
@@ -36,118 +24,121 @@
 import axios from "axios";
 import { ref, reactive, computed, onMounted, toRefs, nextTick } from 'vue';
 import { useStore } from 'vuex';
-
+import ListReferences from "../components/Note/ListReferences";
+import BlockElement from "../components/Note/BlockElement";
 // import { count, increment, alertMessage } from '../plugins/Editor';
 //import BlockList from "@/components/BlockList";
 
 export default {
+  components: { ListReferences, BlockElement },
 	props: ["slug"],
 	setup(props, context) {
 		const store = useStore();
 
 		const state = reactive({
 			note: {
-				blocks: []
+				blocks: [],
+				references:[],
 			 },
 			textareaDOM: null,
-			selectedIndex: -1,
-			keyDownFunctions: {
-				ArrowUp : (event) => {
-					if(!computedFunctions.previusBlock) return;
-					if(!isFirstLine()) return;
-					event.preventDefault();
-					state.selectedIndex--;
-					let relativeCursorPosition = cursorPosition() + cursorOffset();
-					focusTextarea(relativeCursorPosition);
-				},
-				ArrowDown: (event) => {
-					if(!computedFunctions.nextBlock) return;
-					if(!isLastLine()) return;
-					let relativeCursorPosition = cursorPosition() - cursorOffset();
-					//caso o proximo bloco tenha +1 linha e o cursorposition do current block é maior que o tamanho da primeira linha, define o tamanho maximo como o length da primeira linha para evitar que o cursor seja posicionado na segunda linha
-					relativeCursorPosition = Math.min(relativeCursorPosition,computedFunctions.nextBlock.text.split("\n")[0].length);
-
-					state.selectedIndex++;
-					focusTextarea(relativeCursorPosition);
-
-				},
-				ShiftAltArrowUp : (event) => {
-					if(!computedFunctions.previusBlock) return;
-					event.preventDefault();
-					insertBlock(state.selectedIndex-1,removeBlock());
-					state.selectedIndex--;
-					focusTextarea(cursorPosition());
-				},
-				ShiftAltArrowDown: (event) => {
-					if(!computedFunctions.nextBlock) return;
-					event.preventDefault();
-					insertBlock(state.selectedIndex+1,removeBlock());
-					state.selectedIndex++;
-					focusTextarea(cursorPosition());
-				},
-				Tab: (event) => {
-					event.preventDefault();
-					if(!computedFunctions.previusBlock) return;
-					computedFunctions.currentBlock.level = Math.min(computedFunctions.previusBlock.level+1,computedFunctions.currentBlock.level+1);
-				},
-				ShiftTab: (event) => {
-					event.preventDefault();
-					if(!computedFunctions.previusBlock) return;
-					computedFunctions.currentBlock.level	= Math.max(computedFunctions.currentBlock.level-1,0);
-				},
-				Delete: (event) => {
-					if(cursorPosition() !== computedFunctions.currentBlock.text.length) return;
-					if(!computedFunctions.nextBlock) return;
-					event.preventDefault();
-					const size = computedFunctions.currentBlock.text.length;
-					computedFunctions.currentBlock.text += computedFunctions.nextBlock.text;
-					removeBlock(+1);
-					focusTextarea(size);
-				},
-				ShiftDelete: (event) => {
-					event.preventDefault();
-					removeBlock();
-					focusTextarea(0);
-				},
-				Backspace: (event) => {
-					if(cursorPosition() !== 0) return;
-					if(!computedFunctions.previusBlock) return;
-					event.preventDefault();
-					const size = computedFunctions.previusBlock.text.length;
-					computedFunctions.previusBlock.text += computedFunctions.currentBlock.text;
-					removeBlock();
-					state.selectedIndex--;
-					focusTextarea(size);
-				},
-				Enter: (event) => {
-					event.preventDefault();
-					// if(hasMenu())
-					let start = cursorPosition();
-					let textStart = computedFunctions.currentBlock.text.substr(0, start);
-					let textEnd = computedFunctions.currentBlock.text.substr(start);
-					computedFunctions.currentBlock.text = textStart;
-					let newBlock = {
-						text: textEnd,
-						parent_id: computedFunctions.currentBlock.parent_id,
-						level: computedFunctions.currentBlock.level
-					};
-					insertBlock( state.selectedIndex+1, newBlock );
-					state.selectedIndex++;
-					focusTextarea(0);
-				},
-				CtrlEnter: (event) => {
-					setTodo();
-				},
-			},
+			selectedIndex: computed(() => {
+				return store.state.selectedIndex;
+			}),
 		});
+
+		const keyDownFunctions = {
+			ArrowUp : (event) => {
+				if(!computedFunctions.previusBlock) return;
+				if(!isFirstLine()) return;
+				event.preventDefault();
+				state.selectedIndex--;
+				let relativeCursorPosition = cursorPosition() + cursorOffset();
+				focusTextarea(relativeCursorPosition);
+			},
+			ArrowDown: (event) => {
+				if(!computedFunctions.nextBlock) return;
+				if(!isLastLine()) return;
+				let relativeCursorPosition = cursorPosition() - cursorOffset();
+				//caso o proximo bloco tenha +1 linha e o cursorposition do current block é maior que o tamanho da primeira linha, define o tamanho maximo como o length da primeira linha para evitar que o cursor seja posicionado na segunda linha
+				relativeCursorPosition = Math.min(relativeCursorPosition,computedFunctions.nextBlock.text.split("\n")[0].length);
+
+				state.selectedIndex++;
+				focusTextarea(relativeCursorPosition);
+
+			},
+			ShiftAltArrowUp : (event) => {
+				if(!computedFunctions.previusBlock) return;
+				event.preventDefault();
+				insertBlock(state.selectedIndex-1,removeBlock());
+				state.selectedIndex--;
+				focusTextarea(cursorPosition());
+			},
+			ShiftAltArrowDown: (event) => {
+				if(!computedFunctions.nextBlock) return;
+				event.preventDefault();
+				insertBlock(state.selectedIndex+1,removeBlock());
+				state.selectedIndex++;
+				focusTextarea(cursorPosition());
+			},
+			Tab: (event) => {
+				event.preventDefault();
+				if(!computedFunctions.previusBlock) return;
+				computedFunctions.currentBlock.level = Math.min(computedFunctions.previusBlock.level+1,computedFunctions.currentBlock.level+1);
+			},
+			ShiftTab: (event) => {
+				event.preventDefault();
+				if(!computedFunctions.previusBlock) return;
+				computedFunctions.currentBlock.level	= Math.max(computedFunctions.currentBlock.level-1,0);
+			},
+			Delete: (event) => {
+				if(cursorPosition() !== computedFunctions.currentBlock.text.length) return;
+				if(!computedFunctions.nextBlock) return;
+				event.preventDefault();
+				const size = computedFunctions.currentBlock.text.length;
+				computedFunctions.currentBlock.text += computedFunctions.nextBlock.text;
+				removeBlock(+1);
+				focusTextarea(size);
+			},
+			ShiftDelete: (event) => {
+				event.preventDefault();
+				removeBlock();
+				focusTextarea(0);
+			},
+			Backspace: (event) => {
+				if(cursorPosition() !== 0) return;
+				if(!computedFunctions.previusBlock) return;
+				event.preventDefault();
+				const size = computedFunctions.previusBlock.text.length;
+				computedFunctions.previusBlock.text += computedFunctions.currentBlock.text;
+				removeBlock();
+				state.selectedIndex--;
+				focusTextarea(size);
+			},
+			Enter: (event) => {
+				event.preventDefault();
+				// if(hasMenu())
+				let start = cursorPosition();
+				let textStart = computedFunctions.currentBlock.text.substr(0, start);
+				let textEnd = computedFunctions.currentBlock.text.substr(start);
+				computedFunctions.currentBlock.text = textStart;
+				let newBlock = {
+					text: textEnd,
+					parent_id: computedFunctions.currentBlock.parent_id,
+					level: computedFunctions.currentBlock.level
+				};
+				insertBlock( state.selectedIndex+1, newBlock );
+				state.selectedIndex++;
+				focusTextarea(0);
+			},
+			CtrlEnter: (event) => {
+				setTodo();
+			},
+		};
 
 		const computedFunctions = reactive({
 			currentBlock: computed(() => {
 				console.log('found');
 				return state.note.blocks[state.selectedIndex];
-			}),
-			notes: computed(() => {
-				return store.getters.notes;
 			}),
 			nextBlock: computed(() => {
 				return state.note.blocks[state.selectedIndex + 1];
@@ -155,14 +146,6 @@ export default {
 			previusBlock: computed(() => {
 				return state.note.blocks[state.selectedIndex - 1];
 			}),
-			references: computed(() => {
-				if(!notes || !state.note.references) return false;
-				var blocks = state.note.references;
-				return blocks.map(block=>{
-					block.note = notes[block.note_id];
-					return block;
-				})
-			})
 		});
 
 		function cursorPosition(newval) {
@@ -202,9 +185,9 @@ export default {
 			if(event.altKey) command += 'Alt';
 			command += event.key;
 
-			if(typeof state.keyDownFunctions[command] === 'function'){
+			if(typeof keyDownFunctions[command] === 'function'){
 				console.log(`Key down: ${command}\n---`);
-				state.keyDownFunctions[command](event);
+				keyDownFunctions[command](event);
 			}
 		}
 		const removeBlock = (nearBy) => {
@@ -278,20 +261,14 @@ export default {
 		}
 
 		onMounted(() => {
-			if(!notes){
-				store.dispatch('getNotesIndex');
-			}
-
 			store.dispatch("getNote", props.slug).then(res => {
 				state.note = res.data;
+				console.log({references: state.note.references});
 			});
 		});
 
 		const { note, selectedIndex, textareaDOM } = toRefs(state);
-		const { references, notes } = toRefs(computedFunctions);
 		return {
-			references,
-			notes,
 			note,
 			selectedIndex,
 			styleBlock,
