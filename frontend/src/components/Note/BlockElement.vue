@@ -1,5 +1,5 @@
 <template>
-	<div :style="styleBlock(block.level)">
+	<div :style="styleBlock(block.level)" :data-index="index" :data-id="block.id" :data-temp_id="block.temp_id">
 		<textarea
 			v-if="selectedIndex === index"
 			v-model="block.text"
@@ -7,35 +7,43 @@
 			@input="setInputHeight"
 			@keydown="onKeydown"
 		/>
-		<p @click="onClickBlock(index,$event)" v-html="marked(block.text)"></p>
+		<p @click="onClickBlock(index,$event)" v-html="index+' '+marked(block.text)"></p>
 	</div>
 </template>
 <script>
 import { ref, reactive, computed, onMounted, toRefs, nextTick } from 'vue';
-import { useStore } from 'vuex';
+
+import store from '@/store';
 
 export default {
-	props: ["key", "block"],
+	props: ["index", "block"],
 	setup(props, context) {
-		const store = useStore();
+		// const store = useStore();
 		const block = props.block;
-		const index = props.key;
+		const index = props.index;
 
 		const state = reactive({
 			note: {
 				blocks: [],
 				references:[],
 			 },
-			textareaDOM: null,
-			selectedIndex: store.state.selectedIndex,
+			selectedIndex: computed(() => {
+				return store.state.selectedIndex;
+			}),
+			textareaDOM: computed(() => {
+				return store.state.textareaDOM;
+			}),
 		});
 
 		function cursorPosition(newval) {
 			if(!state.textareaDOM) return 0;
 			if(newval===undefined){
-				return state.textareaDOM.selectionStart;
+				return
+			state.textareaDOM.selectionStart;
 			}
+
 			state.textareaDOM.selectionStart = newval;
+
 			state.textareaDOM.selectionEnd = newval;
 		}
 
@@ -66,19 +74,29 @@ export default {
 		const focusTextarea = (position) => {
 			console.log('position',position);
 			nextTick(function() {
-				console.log('textarea depois',state.textareaDOM);
+				if(!state.textareaDOM){
+					console.error('Textarea not found');
+					return;
+				}
 				state.textareaDOM.focus();
 				cursorPosition(position);
 				setInputHeight();
 			});
 		}
 		const setInputHeight = () => {
+
 			state.textareaDOM.style.height = "1.5em";
-			state.textareaDOM.style.height = `${state.textareaDOM.scrollHeight}px`;
+
+			state.textareaDOM.style.height = `${
+			state.textareaDOM.scrollHeight}px`;
 		}
 		const selectBlock = (index) => {
-			state.selectedIndex = index;
-
+			store.state.selectedIndex = index;
+			console.log({
+				propIndex: index,
+				storeIndex: store.state.selectedIndex,
+				localIndex: state.selectedIndex
+			})
 			let position = window.getSelection().getRangeAt(0).endOffset;
 			focusTextarea(position);
 		}
@@ -124,7 +142,8 @@ export default {
 			return text;
 		}
 
-		const {  selectedIndex, textareaDOM } = toRefs( state );
+		const {  selectedIndex } = toRefs( state );
+		const { textareaDOM } = toRefs(store.state);
 		return {
 			selectedIndex,
 			styleBlock,

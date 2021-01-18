@@ -9,17 +9,19 @@
 </template>
 <script>
 import { computed } from 'vue';
-import { useStore } from 'vuex';
+import store from '@/store';
+
+
 export default {
 	props: ["references"],
 	setup(props) {
-		const store = useStore();
+
 		const blockReferences = props.references;
 
 		const references = computed(() => {
-			if(!store.getters.notes) return [];
+			if(!store.state.notes) return [];
 			return blockReferences.map(block=>{
-				block.note = store.getters.notes[block.note_id];
+				block.note = store.state.notes[block.note_id];
 				return block;
 			});
 		});

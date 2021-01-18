@@ -9,7 +9,8 @@
 			<div class="blocks">
 				<block-element
 					v-for="(block, index) in note.blocks"
-					:key="index"
+					:key="index + block.text"
+					:index="index"
 					:block="block"
 					@onKeydown="onKeydown"
 				/>
@@ -23,7 +24,7 @@
 <script>
 import axios from "axios";
 import { ref, reactive, computed, onMounted, toRefs, nextTick } from 'vue';
-import { useStore } from 'vuex';
+import store from '@/store';
 import ListReferences from "../components/Note/ListReferences";
 import BlockElement from "../components/Note/BlockElement";
 // import { count, increment, alertMessage } from '../plugins/Editor';
@@ -33,16 +34,17 @@ export default {
   components: { ListReferences, BlockElement },
 	props: ["slug"],
 	setup(props, context) {
-		const store = useStore();
 
 		const state = reactive({
 			note: {
 				blocks: [],
 				references:[],
 			 },
-			textareaDOM: null,
 			selectedIndex: computed(() => {
 				return store.state.selectedIndex;
+			}),
+			textareaDOM: computed(() => {
+				return store.state.textareaDOM;
 			}),
 		});
 
@@ -51,7 +53,7 @@ export default {
 				if(!computedFunctions.previusBlock) return;
 				if(!isFirstLine()) return;
 				event.preventDefault();
-				state.selectedIndex--;
+				store.state.selectedIndex--;
 				let relativeCursorPosition = cursorPosition() + cursorOffset();
 				focusTextarea(relativeCursorPosition);
 			},
@@ -62,22 +64,24 @@ export default {
 				//caso o proximo bloco tenha +1 linha e o cursorposition do current block é maior que o tamanho da primeira linha, define o tamanho maximo como o length da primeira linha para evitar que o cursor seja posicionado na segunda linha
 				relativeCursorPosition = Math.min(relativeCursorPosition,computedFunctions.nextBlock.text.split("\n")[0].length);
 
-				state.selectedIndex++;
+				store.state.selectedIndex++;
 				focusTextarea(relativeCursorPosition);
 
 			},
 			ShiftAltArrowUp : (event) => {
 				if(!computedFunctions.previusBlock) return;
 				event.preventDefault();
+				console.log({before: state.note.blocks});
 				insertBlock(state.selectedIndex-1,removeBlock());
-				state.selectedIndex--;
+				console.log({after: state.note.blocks});
+				store.state.selectedIndex--;
 				focusTextarea(cursorPosition());
 			},
 			ShiftAltArrowDown: (event) => {
 				if(!computedFunctions.nextBlock) return;
 				event.preventDefault();
 				insertBlock(state.selectedIndex+1,removeBlock());
-				state.selectedIndex++;
+				store.state.selectedIndex++;
 				focusTextarea(cursorPosition());
 			},
 			Tab: (event) => {
@@ -111,7 +115,7 @@ export default {
 				const size = computedFunctions.previusBlock.text.length;
 				computedFunctions.previusBlock.text += computedFunctions.currentBlock.text;
 				removeBlock();
-				state.selectedIndex--;
+				store.state.selectedIndex--;
 				focusTextarea(size);
 			},
 			Enter: (event) => {
@@ -124,10 +128,12 @@ export default {
 				let newBlock = {
 					text: textEnd,
 					parent_id: computedFunctions.currentBlock.parent_id,
-					level: computedFunctions.currentBlock.level
+					level: computedFunctions.currentBlock.level,
+					temp_id:new Date().getTime(),
+
 				};
 				insertBlock( state.selectedIndex+1, newBlock );
-				state.selectedIndex++;
+				store.state.selectedIndex++;
 				focusTextarea(0);
 			},
 			CtrlEnter: (event) => {
@@ -184,7 +190,6 @@ export default {
 			if(event.shiftKey) command += 'Shift';
 			if(event.altKey) command += 'Alt';
 			command += event.key;
-
 			if(typeof keyDownFunctions[command] === 'function'){
 				console.log(`Key down: ${command}\n---`);
 				keyDownFunctions[command](event);
@@ -212,7 +217,7 @@ export default {
 			state.textareaDOM.style.height = `${state.textareaDOM.scrollHeight}px`;
 		}
 		const selectBlock = (index) => {
-			state.selectedIndex = index;
+			store.state.selectedIndex = index;
 
 			let position = window.getSelection().getRangeAt(0).endOffset;
 			focusTextarea(position);
@@ -261,18 +266,22 @@ export default {
 		}
 
 		onMounted(() => {
-			store.dispatch("getNote", props.slug).then(res => {
+
+			store.getNote(props.slug).then(res => {
 				state.note = res.data;
-				console.log({references: state.note.references});
 			});
 		});
 
-		const { note, selectedIndex, textareaDOM } = toRefs(state);
+
+
+		const { note } = toRefs(state);
+
+		const { selectedIndex } = toRefs(store.state);
+
 		return {
 			note,
 			selectedIndex,
 			styleBlock,
-			textareaDOM,
 			marked,
 			onClickBlock,
 			setInputHeight,

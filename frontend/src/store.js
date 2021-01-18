@@ -18,6 +18,7 @@ const state = reactive({
 	loading: 0,
 	loadingMessage: '',
 	selectedIndex: -1,
+	textareaDOM: null,
 	isAuthenticated: computed(() => {
 		return state.authInitialized && state.user &&  state.user.id;
 	}),
@@ -68,8 +69,8 @@ const getNotesIndex = () => {
 const getNote = (slug) => {
 	startLoading();
 	return axios({ url: '/api/notes/'+slug }).then(res=>{
-			state.note = res.data;
-			state.blocks = res.data.blocks;
+			//state.note = res.data;
+			//state.blocks = res.data.blocks;
 			return res;
 
 	}).catch(res=>{
@@ -98,7 +99,8 @@ const newNote = (name) => {
 }
 
 export default {
-  state,
+	state,
+	getNote,
 	startLoading,
 	getNotesIndex,
   authInitialized,
