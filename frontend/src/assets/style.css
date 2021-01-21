@@ -8,8 +8,10 @@ body {
 .notes li { padding:10px;  }
 
 .vanilla p { margin:0;}
+.blocks { margin-left:20px;}
 .blocks p { margin:0;}
-
+.blocks>div { position: relative;}
+.blocks>div:before { content: ''; top: 8px; left: -10px; display: block; width: 4px; height: 4px; border-radius:4px;background: #000; position: absolute; }
 
 .checkbox { cursor: pointer; width:15px; height:15px; display:inline-block; margin-right:3px; color: #000;}
 .checkbox:before { content:'☐';  }
