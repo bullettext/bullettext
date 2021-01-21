@@ -1,7 +1,7 @@
 <template>
 	<div>
 		<div class="container" v-if="note.id" :data-note="note.id">
-			<button onclick="saveAll()">save</button>
+			<button @click="saveAll">save</button>
 			<div class="my-3">
 				<h1>{{ note.name }}</h1>
 			</div>
@@ -9,7 +9,7 @@
 			<div class="blocks">
 				<block-element
 					v-for="(block, index) in note.blocks"
-					:key="index + block.text"
+					:key="keyElement(block, index)"
 					:index="index"
 					:block="block"
 					@onKeydown="onKeydown"
@@ -34,7 +34,6 @@ export default {
   components: { ListReferences, BlockElement },
 	props: ["slug"],
 	setup(props, context) {
-
 		const state = reactive({
 			note: {
 				blocks: [],
@@ -71,9 +70,7 @@ export default {
 			ShiftAltArrowUp : (event) => {
 				if(!computedFunctions.previusBlock) return;
 				event.preventDefault();
-				console.log({before: state.note.blocks});
 				insertBlock(state.selectedIndex-1,removeBlock());
-				console.log({after: state.note.blocks});
 				store.state.selectedIndex--;
 				focusTextarea(cursorPosition());
 			},
@@ -129,21 +126,18 @@ export default {
 					text: textEnd,
 					parent_id: computedFunctions.currentBlock.parent_id,
 					level: computedFunctions.currentBlock.level,
-					temp_id:new Date().getTime(),
+					temp_id:`temp${new Date().getTime()}`,
 
 				};
 				insertBlock( state.selectedIndex+1, newBlock );
 				store.state.selectedIndex++;
 				focusTextarea(0);
 			},
-			CtrlEnter: (event) => {
-				setTodo();
-			},
+
 		};
 
 		const computedFunctions = reactive({
 			currentBlock: computed(() => {
-				console.log('found');
 				return state.note.blocks[state.selectedIndex];
 			}),
 			nextBlock: computed(() => {
@@ -162,7 +156,10 @@ export default {
 			state.textareaDOM.selectionStart = newval;
 			state.textareaDOM.selectionEnd = newval;
 		}
-
+		const keyElement = (block,index) => {
+			const id = block.id ? `id-${block.id}` : `temp_id-${block.temp_id}`;
+			return `index-${index}-${id}`;
+		}
 		const cursorOffset = () =>{
 			let lines = computedFunctions.currentBlock.text.split("\n");
 			lines.pop();
@@ -174,15 +171,9 @@ export default {
 			return lines[0].length >= cursorPosition();
 		}
 		const isLastLine = () =>{
-			console.log('IsLastLine');
 			let lines = computedFunctions.currentBlock.text.split("\n");
 			lines.pop();
 			return lines.join("\n").length <= cursorPosition();
-		}
-		const styleBlock = (level) => {
-			return 	{
-				marginLeft: `${20*level}px`
-			};
 		}
 		const onKeydown = (event) => {
 			let command = '';
@@ -216,53 +207,55 @@ export default {
 			state.textareaDOM.style.height = "1.5em";
 			state.textareaDOM.style.height = `${state.textareaDOM.scrollHeight}px`;
 		}
-		const selectBlock = (index) => {
-			store.state.selectedIndex = index;
 
-			let position = window.getSelection().getRangeAt(0).endOffset;
-			focusTextarea(position);
+		const findParent = (id, level) => {
+			if(level == 0) return null;
+			let previusBlock = null;
+			let parentId = null;
+			state.note.blocks.forEach((block) => {
+				if(block.level == level - 1) {
+					previusBlock = block;
+				} else if(block.level == level) {
+					let blockId = block.id || block.temp_id;
+					if(blockId == id) {
+						let previusBlockId = previusBlock.id || previusBlock.temp_id;
+						parentId = previusBlockId;
+					}
+				}
+			});
+			return parentId;
 		}
-		const onClickBlock = (index,event) => {
-			if(event.target.matches('.checkbox')){
-				let block = note.blocks[index];
-				toggleCheckbox(block)
-				return;
-			}
-			selectBlock(index,event);
-		}
-		const setTodo = () => {
-			let text = computedFunctions.currentBlock.text;
 
-			if (!text.match(/^\[\[(TODO|DONE)\]\]/)) {
-				text = "[[TODO]] " + text;
-			} else if (text.match(/^\[\[TODO\]\]/)) {
-				text = text.replace(/^\[\[TODO\]\]/, "[[DONE]]");
-			} else if (text.match(/^\[\[DONE\]\]/)) {
-				text = text.replace(/^\[\[DONE\]\] */, "");
-			}
-			computedFunctions.currentBlock.text = text;
-		}
-		const toggleCheckbox = (block) => {
-			let text = block.text;
-			if (text.match(/^\[\[TODO\]\]/)) {
-				text = text.replace(/^\[\[TODO\]\]/, "[[DONE]]");
-			} else if (text.match(/^\[\[DONE\]\]/)) {
-				text = text.replace(/^\[\[DONE\]\]/, "[[TODO]]");
-			}
-			block.text = text;
-		}
-		const marked = (text) => {
-			if(!text) return '';
-			text = text.replace(/^\[\[TODO\]\]/,'<span class="checkbox"></span>');
-			text = text.replace(/^\[\[DONE\]\]/,'<span class="checkbox checked"></span>');
+		const saveAll = () => {
+			console.log('saving');
 
-			text = text.replace(/\*\*([^\*]+)\*\*/g,'<strong>$1</strong>');
-			text = text.replace(/__([^_]+)__/g,'<strong>$1</strong>');
-			text = text.replace(/~~([^~]+)~~/g,'<del>$1</del>');
+			const note_id = state.note.id;
 
-			text = text.replace(/\*([^\*]+)\*/g,'<em>$1</em>');
-			text = text.replace(/_([^_]+)_/g,'<em>$1</em>');
-			return text;
+			let data = state.note.blocks;
+			data.forEach((block, index) => {
+				let id = block.id || block.temp_id;
+				block.parent_id = findParent(id, block.level);
+				block.order = index;
+			});
+			console.log(data);
+			// addHistory(data);
+
+			axios({
+					method:'post',
+					url:'/api/notes/save-blocks/'+note_id,
+					data:data,
+			}).then(res=>{
+				console.log(res);
+					updateBlocksRefs(res.data.temp_ids);
+					store.state.notes = [...res.data.new_notes, ...store.state.notes];
+			}).catch(res=>{
+					console.error('save error');
+					console.error(res);
+			});
+		}
+
+		const updateBlockRefs = () => {
+
 		}
 
 		onMounted(() => {
@@ -280,12 +273,10 @@ export default {
 
 		return {
 			note,
+			keyElement,
 			selectedIndex,
-			styleBlock,
-			marked,
-			onClickBlock,
-			setInputHeight,
-			onKeydown
+			onKeydown,
+			saveAll
 		}
 	}
 };

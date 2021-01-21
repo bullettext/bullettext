@@ -7,7 +7,7 @@
 			@input="setInputHeight"
 			@keydown="onKeydown"
 		/>
-		<p @click="onClickBlock(index,$event)" v-html="index+' '+marked(block.text)"></p>
+		<p @click="onClickBlock(index,$event)" v-html="marked(block.text)"></p>
 	</div>
 </template>
 <script>
@@ -18,7 +18,6 @@ import store from '@/store';
 export default {
 	props: ["index", "block"],
 	setup(props, context) {
-		// const store = useStore();
 		const block = props.block;
 		const index = props.index;
 
@@ -35,6 +34,13 @@ export default {
 			}),
 		});
 
+		const keyDownFunctions = {
+			CtrlEnter: (event) => {
+				setTodo();
+			},
+
+		}
+
 		function cursorPosition(newval) {
 			if(!state.textareaDOM) return 0;
 			if(newval===undefined){
@@ -47,28 +53,22 @@ export default {
 			state.textareaDOM.selectionEnd = newval;
 		}
 
-		const cursorOffset = () =>{
-			let lines = computedFunctions.currentBlock.text.split("\n");
-			lines.pop();
-			return lines.join("\n").length
-			//let match = text.match(/^([\s\S]+)\n/); return match?match.pop().length:0;
-		}
-		const isFirstLine = () =>{
-			let lines = computedFunctions.currentBlock.text.split("\n");
-			return lines[0].length >= cursorPosition();
-		}
-		const isLastLine = () =>{
-			console.log('IsLastLine');
-			let lines = computedFunctions.currentBlock.text.split("\n");
-			lines.pop();
-			return lines.join("\n").length <= cursorPosition();
-		}
 		const styleBlock = (level) => {
 			return 	{
 				marginLeft: `${20*level}px`
 			};
 		}
 		const onKeydown = (event) => {
+			console.log({onKeydown: event})
+			let command = '';
+			if(event.ctrlKey) command += 'Ctrl';
+			if(event.shiftKey) command += 'Shift';
+			if(event.altKey) command += 'Alt';
+			command += event.key;
+			if(typeof keyDownFunctions[command] === 'function'){
+				keyDownFunctions[command](event);
+				return;
+			}
 			context.emit('onKeydown', event);
 		}
 		const focusTextarea = (position) => {
@@ -92,11 +92,6 @@ export default {
 		}
 		const selectBlock = (index) => {
 			store.state.selectedIndex = index;
-			console.log({
-				propIndex: index,
-				storeIndex: store.state.selectedIndex,
-				localIndex: state.selectedIndex
-			})
 			let position = window.getSelection().getRangeAt(0).endOffset;
 			focusTextarea(position);
 		}
@@ -108,7 +103,7 @@ export default {
 			selectBlock(index,event);
 		}
 		const setTodo = () => {
-			let text = computedFunctions.currentBlock.text;
+			let text = block.text;
 
 			if (!text.match(/^\[\[(TODO|DONE)\]\]/)) {
 				text = "[[TODO]] " + text;
@@ -117,7 +112,7 @@ export default {
 			} else if (text.match(/^\[\[DONE\]\]/)) {
 				text = text.replace(/^\[\[DONE\]\] */, "");
 			}
-			computedFunctions.currentBlock.text = text;
+			block.text = text;
 		}
 		const toggleCheckbox = (block) => {
 			let text = block.text;
