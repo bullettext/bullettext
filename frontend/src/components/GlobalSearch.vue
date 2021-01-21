@@ -95,7 +95,6 @@
 				},100);
 			},
 			newNote(){
-				console.log('newNote');
 				this.$store.dispatch('newNote',this.searchterm);
 			}
 

@@ -34,7 +34,6 @@ const state = reactive({
 
 
 const startLoading = () => {
-  console.log('startLoading');
 	state.loading += 1;
 }
 const stopLoading = () => {
@@ -56,11 +55,9 @@ const authInitialized = () => {
 	state.authInitialized = true;
 }
 const getNotesIndex = () => {
-	console.log('getNotesIndex')
 	startLoading();
 	axios({ url: '/api/notes' }).then((res) => {
     state.notes = res.data;
-    console.log('state.notes',res.data)
 	}).finally(()=>{
 		stopLoading();
 	});

@@ -32,7 +32,7 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
 /*  window.scrollTo(0,0); */
 
-	console.log('route beforeeach to: ',to.path);
+	console.log('route before each to: ',to.path);
 
 	//if(edited && $('[data-note]')){
 	//	saveAll();
