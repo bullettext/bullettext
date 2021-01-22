@@ -208,33 +208,20 @@ export default {
 			state.textareaDOM.style.height = `${state.textareaDOM.scrollHeight}px`;
 		}
 
-		const findParent = (id, level) => {
-			if(level == 0) return null;
-			let previusBlock = null;
-			let parentId = null;
-			state.note.blocks.forEach((block) => {
-				if(block.level == level - 1) {
-					previusBlock = block;
-				} else if(block.level == level) {
-					let blockId = block.id || block.temp_id;
-					if(blockId == id) {
-						let previusBlockId = previusBlock.id || previusBlock.temp_id;
-						parentId = previusBlockId;
-					}
-				}
-			});
-			return parentId;
-		}
-
 		const saveAll = () => {
 			console.log('saving');
 
 			const note_id = state.note.id;
 
 			let data = state.note.blocks;
-			data.forEach((block, index) => {
-				let id = block.id || block.temp_id;
-				block.parent_id = findParent(id, block.level);
+
+			let path = [];
+			//let counter = [];
+			data.forEach((block,index) => {
+				//set parent_id
+				path[block.level] = block.id || block.temp_id;
+				block.parent_id = block.level==0?null:path[block.level-1];
+
 				block.order = index;
 			});
 			console.log(data);
@@ -254,8 +241,13 @@ export default {
 			});
 		}
 
-		const updateBlockRefs = () => {
-
+		const updateBlocksRefs = (data) => {
+			for(var temp_id in data){
+				var block = state.note.blocks.find(block=>block.temp_id==temp_id);
+				block.id = data[temp_id];
+				block.temp_id = null;
+				console.log(`${temp_id} updated to id ${block.id}`);
+			}
 		}
 
 		onMounted(() => {
