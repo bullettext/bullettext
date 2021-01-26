@@ -45,98 +45,6 @@ export default {
 			textareaDOM: computed(() => {
 				return store.state.textareaDOM;
 			}),
-		});
-
-		const keyDownFunctions = {
-			ArrowUp : (event) => {
-				if(!computedFunctions.previusBlock) return;
-				if(!isFirstLine()) return;
-				event.preventDefault();
-				store.state.selectedIndex--;
-				let relativeCursorPosition = cursorPosition() + cursorOffset();
-				focusTextarea(relativeCursorPosition);
-			},
-			ArrowDown: (event) => {
-				if(!computedFunctions.nextBlock) return;
-				if(!isLastLine()) return;
-				let relativeCursorPosition = cursorPosition() - cursorOffset();
-				//caso o proximo bloco tenha +1 linha e o cursorposition do current block é maior que o tamanho da primeira linha, define o tamanho maximo como o length da primeira linha para evitar que o cursor seja posicionado na segunda linha
-				relativeCursorPosition = Math.min(relativeCursorPosition,computedFunctions.nextBlock.text.split("\n")[0].length);
-
-				store.state.selectedIndex++;
-				focusTextarea(relativeCursorPosition);
-
-			},
-			ShiftAltArrowUp : (event) => {
-				if(!computedFunctions.previusBlock) return;
-				event.preventDefault();
-				insertBlock(state.selectedIndex-1,removeBlock());
-				store.state.selectedIndex--;
-				focusTextarea(cursorPosition());
-			},
-			ShiftAltArrowDown: (event) => {
-				if(!computedFunctions.nextBlock) return;
-				event.preventDefault();
-				insertBlock(state.selectedIndex+1,removeBlock());
-				store.state.selectedIndex++;
-				focusTextarea(cursorPosition());
-			},
-			Tab: (event) => {
-				event.preventDefault();
-				if(!computedFunctions.previusBlock) return;
-				computedFunctions.currentBlock.level = Math.min(computedFunctions.previusBlock.level+1,computedFunctions.currentBlock.level+1);
-			},
-			ShiftTab: (event) => {
-				event.preventDefault();
-				if(!computedFunctions.previusBlock) return;
-				computedFunctions.currentBlock.level	= Math.max(computedFunctions.currentBlock.level-1,0);
-			},
-			Delete: (event) => {
-				if(cursorPosition() !== computedFunctions.currentBlock.text.length) return;
-				if(!computedFunctions.nextBlock) return;
-				event.preventDefault();
-				const size = computedFunctions.currentBlock.text.length;
-				computedFunctions.currentBlock.text += computedFunctions.nextBlock.text;
-				removeBlock(+1);
-				focusTextarea(size);
-			},
-			ShiftDelete: (event) => {
-				event.preventDefault();
-				removeBlock();
-				focusTextarea(0);
-			},
-			Backspace: (event) => {
-				if(cursorPosition() !== 0) return;
-				if(!computedFunctions.previusBlock) return;
-				event.preventDefault();
-				const size = computedFunctions.previusBlock.text.length;
-				computedFunctions.previusBlock.text += computedFunctions.currentBlock.text;
-				removeBlock();
-				store.state.selectedIndex--;
-				focusTextarea(size);
-			},
-			Enter: (event) => {
-				event.preventDefault();
-				// if(hasMenu())
-				let start = cursorPosition();
-				let textStart = computedFunctions.currentBlock.text.substr(0, start);
-				let textEnd = computedFunctions.currentBlock.text.substr(start);
-				computedFunctions.currentBlock.text = textStart;
-				let newBlock = {
-					text: textEnd,
-					parent_id: computedFunctions.currentBlock.parent_id,
-					level: computedFunctions.currentBlock.level,
-					temp_id:`temp${new Date().getTime()}`,
-
-				};
-				insertBlock( state.selectedIndex+1, newBlock );
-				store.state.selectedIndex++;
-				focusTextarea(0);
-			},
-
-		};
-
-		const computedFunctions = reactive({
 			currentBlock: computed(() => {
 				return state.note.blocks[state.selectedIndex];
 			}),
@@ -147,6 +55,97 @@ export default {
 				return state.note.blocks[state.selectedIndex - 1];
 			}),
 		});
+
+		const keyDownFunctions = {
+			ArrowUp : (event) => {
+				if(!state.previusBlock) return;
+				if(!isFirstLine()) return;
+				event.preventDefault();
+				store.state.selectedIndex--;
+				let relativeCursorPosition = cursorPosition() + cursorOffset();
+				focusTextarea(relativeCursorPosition);
+			},
+			ArrowDown: (event) => {
+				if(!state.nextBlock) return;
+				if(!isLastLine()) return;
+				let relativeCursorPosition = cursorPosition() - cursorOffset();
+				//caso o proximo bloco tenha +1 linha e o cursorposition do current block é maior que o tamanho da primeira linha, define o tamanho maximo como o length da primeira linha para evitar que o cursor seja posicionado na segunda linha
+				relativeCursorPosition = Math.min(relativeCursorPosition,state.nextBlock.text.split("\n")[0].length);
+
+				store.state.selectedIndex++;
+				focusTextarea(relativeCursorPosition);
+
+			},
+			ShiftAltArrowUp : (event) => {
+				if(!state.previusBlock) return;
+				event.preventDefault();
+				insertBlock(state.selectedIndex-1,removeBlock());
+				store.state.selectedIndex--;
+				refactorOrderBlock();
+				focusTextarea(cursorPosition());
+			},
+			ShiftAltArrowDown: (event) => {
+				if(!state.nextBlock) return;
+				event.preventDefault();
+				insertBlock(state.selectedIndex+1,removeBlock());
+				store.state.selectedIndex++;
+				refactorOrderBlock();
+				focusTextarea(cursorPosition());
+			},
+			Tab: (event) => {
+				event.preventDefault();
+				if(!state.previusBlock) return;
+				state.currentBlock.level = Math.min(state.previusBlock.level+1,state.currentBlock.level+1);
+			},
+			ShiftTab: (event) => {
+				event.preventDefault();
+				if(!state.previusBlock) return;
+				state.currentBlock.level	= Math.max(state.currentBlock.level-1,0);
+			},
+			Delete: (event) => {
+				if(cursorPosition() !== state.currentBlock.text.length) return;
+				if(!state.nextBlock) return;
+				event.preventDefault();
+				const size = state.currentBlock.text.length;
+				state.currentBlock.text += state.nextBlock.text;
+				removeBlock(+1);
+				focusTextarea(size);
+			},
+			ShiftDelete: (event) => {
+				event.preventDefault();
+				removeBlock();
+				focusTextarea(0);
+			},
+			Backspace: (event) => {
+				if(cursorPosition() !== 0) return;
+				if(!state.previusBlock) return;
+				event.preventDefault();
+				const size = state.previusBlock.text.length;
+				state.previusBlock.text += state.currentBlock.text;
+				removeBlock();
+				store.state.selectedIndex--;
+				focusTextarea(size);
+			},
+			Enter: (event) => {
+				event.preventDefault();
+				// if(hasMenu())
+				let start = cursorPosition();
+				let textStart = state.currentBlock.text.substr(0, start);
+				let textEnd = state.currentBlock.text.substr(start);
+				state.currentBlock.text = textStart;
+				let newBlock = {
+					text: textEnd,
+					parent_id: state.currentBlock.parent_id,
+					level: state.currentBlock.level,
+					temp_id:`temp${new Date().getTime()}`,
+
+				};
+				insertBlock( state.selectedIndex+1, newBlock );
+				store.state.selectedIndex++;
+				focusTextarea(0);
+			},
+
+		};
 
 		function cursorPosition(newval) {
 			if(!state.textareaDOM) return 0;
@@ -161,17 +160,17 @@ export default {
 			return `index-${index}-${id}`;
 		}
 		const cursorOffset = () =>{
-			let lines = computedFunctions.currentBlock.text.split("\n");
+			let lines = state.currentBlock.text.split("\n");
 			lines.pop();
 			return lines.join("\n").length
 			//let match = text.match(/^([\s\S]+)\n/); return match?match.pop().length:0;
 		}
 		const isFirstLine = () =>{
-			let lines = computedFunctions.currentBlock.text.split("\n");
+			let lines = state.currentBlock.text.split("\n");
 			return lines[0].length >= cursorPosition();
 		}
 		const isLastLine = () =>{
-			let lines = computedFunctions.currentBlock.text.split("\n");
+			let lines = state.currentBlock.text.split("\n");
 			lines.pop();
 			return lines.join("\n").length <= cursorPosition();
 		}
@@ -189,8 +188,20 @@ export default {
 		const removeBlock = (nearBy) => {
 			if(!nearBy) nearBy = 0;
 			let removed = state.note.blocks.splice(state.selectedIndex + nearBy,1);
+			refactorOrderBlock();
 			return removed[0];
 		}
+
+		const refactorOrderBlock = () => {
+			let previusElement = { level: 0 };
+			state.note.blocks.forEach((element) => {
+				if(element.level - previusElement.level > 1) {
+					element.level = previusElement.level + 1;
+				}
+				previusElement = element;
+			})
+		}
+
 		const insertBlock = (index,block) => {
 			state.note.blocks.splice(index,0,block);
 		}
@@ -210,6 +221,8 @@ export default {
 
 		const saveAll = () => {
 			console.log('saving');
+
+			refactorOrderBlock();
 
 			const note_id = state.note.id;
 
@@ -251,7 +264,6 @@ export default {
 		}
 
 		onMounted(() => {
-
 			store.getNote(props.slug).then(res => {
 				state.note = res.data;
 			});
