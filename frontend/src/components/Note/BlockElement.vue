@@ -14,10 +14,14 @@
 import { ref, reactive, computed, onMounted, toRefs, nextTick } from 'vue';
 
 import store from '@/store';
+import {useRouter} from 'vue-router';
 
 export default {
 	props: ["index", "block"],
 	setup(props, context) {
+
+		const router = useRouter();
+
 		const block = props.block;
 		const index = props.index;
 
@@ -67,7 +71,6 @@ export default {
 			command += event.key;
 			if(typeof keyDownFunctions[command] === 'function'){
 				keyDownFunctions[command](event);
-				return;
 			}
 			context.emit('onKeydown', event);
 		}
@@ -98,6 +101,11 @@ export default {
 		const onClickBlock = (index,event) => {
 			if(event.target.matches('.checkbox')){
 				toggleCheckbox(block)
+				return;
+			}
+			if(event.target.matches('.reference')){
+				event.preventDefault();
+				router.push({path:event.target.href})
 				return;
 			}
 			selectBlock(index,event);
@@ -134,6 +142,17 @@ export default {
 
 			text = text.replace(/\*([^\*]+)\*/g,'<em>$1</em>');
 			text = text.replace(/_([^_]+)_/g,'<em>$1</em>');
+
+			var matches = text.match(/\[\[([^\]]+)\]\]/g);
+			if(matches) matches.forEach(match=>{
+				var note_name = match.replace(/[\[\]]/g,'');
+				var note = store.state.notes.find(note=>{
+					return note.name == note_name
+				});
+				if(!note) return;
+				text = text.replace(match,`<a class="reference" href="/${note.slug}">${match}</a>`);
+			});
+
 			return text;
 		}
 

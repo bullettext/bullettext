@@ -1,11 +1,11 @@
 <template>
-	<ul class="references" v-if="references">
-		<li v-for="(block,index) in references" :key="index">
-			<router-link :to="'/'+block.note.slug">{{block.note.name}}</router-link>
+	<div class="references" v-if="references">
+		<h4>References:</h4>
+		<div class="reference-item" v-for="(block,index) in references" :key="index">
+			<router-link v-if="block.note" :to="'/'+block.note.slug">{{block.note.name}}</router-link>
 			<p>{{block.text}}</p>
-		</li>
-	</ul>
-
+		</div>
+	</div>
 </template>
 <script>
 import { computed } from 'vue';
@@ -21,7 +21,7 @@ export default {
 		const references = computed(() => {
 			if(!store.state.notes) return [];
 			return blockReferences.map(block=>{
-				block.note = store.state.notes[block.note_id];
+				block.note = store.state.notes.find(note=>note.id==block.note_id);
 				return block;
 			});
 		});

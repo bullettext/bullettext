@@ -1,8 +1,6 @@
 import { reactive, ref, toRef, toRefs, computed } from "vue";
 import axios from 'axios';
-import { useRouter } from 'vue-router';
-
-const router = useRouter();
+import router from './router';
 
 const state = reactive({
 	user: {
@@ -103,5 +101,6 @@ export default {
   authInitialized,
   setUser,
   setIntendedUrl,
+  newNote
   //...toRefs(isAuthenticated),
 };
