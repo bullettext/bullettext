@@ -25,8 +25,6 @@
               <button class="btn btn-primary" type="submit">Login</button>
             </form>
           </div>
-
-
         </div>
 
 
@@ -56,76 +54,81 @@
 
 
 </template>
-<style scoped>
-
-
-
-</style>
-
 <script>
-
   import axios from 'axios';
+import { reactive, onMounted, toRefs } from "vue";
+  import { useRouter } from 'vue-router';
+  import store from '@/store';
 
   export default {
-  // props:['id','page_id'],
-  data() {
-    return {
-      error:'',
-      login:{
-        email:'',
-        password:'',
-      },
-      register:{
-        name:'',
-        email:'',
-        password:'',
+
+		setup(){
+			const router = useRouter();
+
+			const state = reactive({
+						error:'',
+						login:{
+							email:'',
+							password:'',
+						},
+						register:{
+							name:'',
+							email:'',
+							password:'',
+						}
+        });
+
+      const onSubmitLogin = () =>{
+        state.error = '';
+        axios({
+          method: 'post',
+          url: '/api/login',
+          data: state.login
+        }).then((res)=>{
+          store.setUser(res.data);
+          let intendedUrl = store.state.intendedUrl;
+          if(intendedUrl=='/login' || !intendedUrl) intendedUrl = '/';
+          router.push({path:intendedUrl})
+
+        }).catch((error)=>{
+          state.error = error.response.data;
+        });
+
       }
-    }
-  },
 
-  methods:{
+			const onSubmitRegister = () => {
+				state.error = '';
+				axios({
+					method: 'post',
+					url: '/api/register',
+					data: state.register
+				}).then((res)=>{
+					store.setUser(res.data);
 
-    onSubmitLogin(){
-      this.error = '';
-      axios({
-        method: 'post',
-        url: '/api/login',
-        data: this.login
-      }).then((res)=>{
-        this.$store.dispatch('setUser',res.data)
-        let intendedUrl = this.$store.state.intendedUrl;
-        if(intendedUrl=='/login' || !intendedUrl) intendedUrl = '/';
-        this.$router.push({path:intendedUrl})
+					let intendedUrl = store.state.intendedUrl;
+					if(intendedUrl=='/login' || !intendedUrl) intendedUrl = '/';
+					router.push({path:intendedUrl})
 
-      }).catch((error)=>{
-        this.error = error.response.data;
-      });
+				}).catch((error)=>{
+					state.error = error.response.data;
+				});
 
-    },
+			}
 
-    onSubmitRegister(){
-      this.error = '';
-      axios({
-        method: 'post',
-        url: '/api/register',
-        data: this.register
-      }).then((res)=>{
-        this.$store.dispatch('setUser',res.data)
-
-        let intendedUrl = this.$store.state.intendedUrl;
-        if(intendedUrl=='/login' || !intendedUrl) intendedUrl = '/';
-        this.$router.push({path:intendedUrl})
-
-      }).catch((error)=>{
-        this.error = error.response.data;
-      });
-
-    },
-
-  },
-  mounted(){
-  }
-
+			onMounted(() => {
+				console.log("login");
+			});
+			const { error, login, register } = toRefs(state);
+			return {
+        store,
+				router,
+				error,
+				login,
+				register,
+				onSubmitLogin,
+        onSubmitRegister,
+			};
+	}
 }
 
 

@@ -135,166 +135,166 @@ window.handleKeyArrowDown = function(e){
 	}
 }
 
-window.handleKeyEnter = function(e){
-	e.preventDefault();
-	if(window.hasMenu()) {
-		window.callSelectItemMenu();
-		return;
-	}
-	var textarea = e.target;
-	var block = textarea.closest('[data-block]');
-	var text = textarea.value;
+// window.handleKeyEnter = function(e){
+// 	e.preventDefault();
+// 	if(window.hasMenu()) {
+// 		window.callSelectItemMenu();
+// 		return;
+// 	}
+// 	var textarea = e.target;
+// 	var block = textarea.closest('[data-block]');
+// 	var text = textarea.value;
 
-	var li = document.createElement('li');
-	li.setAttribute('data-block','');
-	li.setAttribute('data-temp-id',getTempId());
-	var p = document.createElement('p');
-	p.innerHTML = unmarked(text.substr(0,textarea.selectionStart));
-	li.appendChild(p);
+// 	var li = document.createElement('li');
+// 	li.setAttribute('data-block','');
+// 	li.setAttribute('data-temp-id',getTempId());
+// 	var p = document.createElement('p');
+// 	p.innerHTML = unmarked(text.substr(0,textarea.selectionStart));
+// 	li.appendChild(p);
 
-	block.parentNode.insertBefore(li,block);
+// 	block.parentNode.insertBefore(li,block);
 
-	textarea.value = text.substr(textarea.selectionEnd);
-	textarea.selectionStart = 0;
-	textarea.selectionEnd = 0;
-}
+// 	textarea.value = text.substr(textarea.selectionEnd);
+// 	textarea.selectionStart = 0;
+// 	textarea.selectionEnd = 0;
+// }
 
-window.handleKeyCtrlEnter = function(e){
-	e.preventDefault();
-	var textarea = e.target;
-	setTodo(textarea);
-	setInputHeight(textarea);
-}
+// window.handleKeyCtrlEnter = function(e){
+// 	e.preventDefault();
+// 	var textarea = e.target;
+// 	setTodo(textarea);
+// 	setInputHeight(textarea);
+// }
 
-window.handleKeyBackspace = function(e){
-	var textarea = e.target;
-	if(textarea.selectionStart == 0 && textarea.selectionEnd==0) {
-		var block = textarea.closest('[data-block]');
-		//get previous
-		var prevBlock = getPrevBlock(block);
-		if(!prevBlock) return;
+// window.handleKeyBackspace = function(e){
+// 	var textarea = e.target;
+// 	if(textarea.selectionStart == 0 && textarea.selectionEnd==0) {
+// 		var block = textarea.closest('[data-block]');
+// 		//get previous
+// 		var prevBlock = getPrevBlock(block);
+// 		if(!prevBlock) return;
 
-		e.preventDefault();
+// 		e.preventDefault();
 
-		const prevText = unmarked(prevBlock.querySelector('p').innerHTML);
-		const p = prevBlock.querySelector('p');
-
-
-		const newTextarea = document.createElement('textarea');
-		newTextarea.value = prevText + textarea.value;
-		prevBlock.insertBefore(newTextarea, p);
-		newTextarea.focus();
-		newTextarea.selectionStart = prevText.length;
-		newTextarea.selectionEnd = prevText.length;
-		setInputHeight(newTextarea);
-
-		const childrensCurrentBlock = getChildrens(block);
-
-		if(childrensCurrentBlock) {
-			let ul = prevBlock.querySelector("ul");
-			if(ul) {
-				ul.innerHTML = ul.innerHTML + childrensCurrentBlock;
-			} else {
-				ul = document.createElement('ul');
-				ul.innerHTML = childrensCurrentBlock;
-				prevBlock.appendChild(ul);
-
-			}
-		}
-
-		block.parentNode.removeChild(block);
+// 		const prevText = unmarked(prevBlock.querySelector('p').innerHTML);
+// 		const p = prevBlock.querySelector('p');
 
 
-		return;
-		//delete current block
+// 		const newTextarea = document.createElement('textarea');
+// 		newTextarea.value = prevText + textarea.value;
+// 		prevBlock.insertBefore(newTextarea, p);
+// 		newTextarea.focus();
+// 		newTextarea.selectionStart = prevText.length;
+// 		newTextarea.selectionEnd = prevText.length;
+// 		setInputHeight(newTextarea);
 
-	}
-}
+// 		const childrensCurrentBlock = getChildrens(block);
+
+// 		if(childrensCurrentBlock) {
+// 			let ul = prevBlock.querySelector("ul");
+// 			if(ul) {
+// 				ul.innerHTML = ul.innerHTML + childrensCurrentBlock;
+// 			} else {
+// 				ul = document.createElement('ul');
+// 				ul.innerHTML = childrensCurrentBlock;
+// 				prevBlock.appendChild(ul);
+
+// 			}
+// 		}
+
+// 		block.parentNode.removeChild(block);
 
 
+// 		return;
+// 		//delete current block
 
-window.handleKeyDelete = function(e){
-	var textarea = e.target;
-	if(textarea.selectionStart == textarea.value.length && textarea.selectionEnd==textarea.value.length) {
-		var block = textarea.closest('[data-block]');
-		var text = textarea.value;
-
-		//get next block
-		var nextBlock = getNextBlock(block);
-		if(!nextBlock) return;
-
-		e.preventDefault();
-
-
-		//if next block is a child, grab its text and merge with current block
-		if(nextBlock == block.querySelector('[data-block]')){
-			const childrensNextBlock = getChildrens(nextBlock);
-			var nextvalue = unmarked(nextBlock.querySelector('p').innerHTML);
-			nextBlock.parentNode.removeChild(nextBlock);
-			textarea.value += nextvalue;
-			if(childrensNextBlock) {
-				block.querySelector("ul").innerHTML = childrensNextBlock + block.querySelector("ul").innerHTML;
-			}
-			setInputHeight(textarea);
-		} else {
-			block.parentNode.removeChild(block);
-			editBlock(nextBlock);
-			textarea = $('textarea');
-			textarea.value = text + textarea.value;
-		}
-		textarea.selectionStart = text.length;
-		textarea.selectionEnd = text.length;
-
-	}
-}
+// 	}
+// }
 
 
 
-window.handleTab = function(e){
-	e.preventDefault();
-	var textarea = e.target;
-	var block = textarea.closest('[data-block]');
+// window.handleKeyDelete = function(e){
+// 	var textarea = e.target;
+// 	if(textarea.selectionStart == textarea.value.length && textarea.selectionEnd==textarea.value.length) {
+// 		var block = textarea.closest('[data-block]');
+// 		var text = textarea.value;
 
-	//get prev
-	var prevBlock = block.previousSibling;
-	if(!prevBlock) return;
+// 		//get next block
+// 		var nextBlock = getNextBlock(block);
+// 		if(!nextBlock) return;
 
-	var ul = prevBlock.querySelector('ul');
-	if(!ul){
-		ul = document.createElement('ul');
-		prevBlock.appendChild(ul);
-	}
+// 		e.preventDefault();
 
-	block.parentNode.removeChild(block);
 
-	ul.appendChild(block);
-	$('textarea').focus();
+// 		//if next block is a child, grab its text and merge with current block
+// 		if(nextBlock == block.querySelector('[data-block]')){
+// 			const childrensNextBlock = getChildrens(nextBlock);
+// 			var nextvalue = unmarked(nextBlock.querySelector('p').innerHTML);
+// 			nextBlock.parentNode.removeChild(nextBlock);
+// 			textarea.value += nextvalue;
+// 			if(childrensNextBlock) {
+// 				block.querySelector("ul").innerHTML = childrensNextBlock + block.querySelector("ul").innerHTML;
+// 			}
+// 			setInputHeight(textarea);
+// 		} else {
+// 			block.parentNode.removeChild(block);
+// 			editBlock(nextBlock);
+// 			textarea = $('textarea');
+// 			textarea.value = text + textarea.value;
+// 		}
+// 		textarea.selectionStart = text.length;
+// 		textarea.selectionEnd = text.length;
 
+// 	}
 }
 
 
 
-window.handleShiftTab = function(e){
-	e.preventDefault();
-	var textarea = e.target;
-	var block = textarea.closest('[data-block]');
+// window.handleTab = function(e){
+// 	e.preventDefault();
+// 	var textarea = e.target;
+// 	var block = textarea.closest('[data-block]');
 
-	var ul = block.parentNode;
-	if(ul.tagName!='UL') return;
+// 	//get prev
+// 	var prevBlock = block.previousSibling;
+// 	if(!prevBlock) return;
 
-	var parentBlock = ul.closest('[data-block]');
+// 	var ul = prevBlock.querySelector('ul');
+// 	if(!ul){
+// 		ul = document.createElement('ul');
+// 		prevBlock.appendChild(ul);
+// 	}
 
-	var reference = parentBlock.nextSibling;
+// 	block.parentNode.removeChild(block);
 
-	ul.removeChild(block);
-	if(ul.querySelectorAll('li').length==0){
-		parentBlock.removeChild(ul);
-	}
+// 	ul.appendChild(block);
+// 	$('textarea').focus();
 
-	if(reference){
-		parentBlock.parentNode.insertBefore(block,reference);
-	} else {
-		parentBlock.parentNode.appendChild(block);
-	}
-	$('textarea').focus();
-}
+// }
+
+
+
+// window.handleShiftTab = function(e){
+// 	e.preventDefault();
+// 	var textarea = e.target;
+// 	var block = textarea.closest('[data-block]');
+
+// 	var ul = block.parentNode;
+// 	if(ul.tagName!='UL') return;
+
+// 	var parentBlock = ul.closest('[data-block]');
+
+// 	var reference = parentBlock.nextSibling;
+
+// 	ul.removeChild(block);
+// 	if(ul.querySelectorAll('li').length==0){
+// 		parentBlock.removeChild(ul);
+// 	}
+
+// 	if(reference){
+// 		parentBlock.parentNode.insertBefore(block,reference);
+// 	} else {
+// 		parentBlock.parentNode.appendChild(block);
+// 	}
+// 	$('textarea').focus();
+// }

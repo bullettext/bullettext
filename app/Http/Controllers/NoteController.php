@@ -36,10 +36,22 @@ class NoteController extends Controller
 		return;
 	}
 
+	private function setLevels($blocks, $parent_id=null,$level=0){
+		for($numblocks = count($blocks),$x=0;$x<$numblocks;$x++){
+			if($blocks[$x]->parent_id==$parent_id){
+				$blocks[$x]->level = $level;
+				$blocks = $this->setLevels($blocks,$blocks[$x]->id,$level+1);
+			}
+		}
+		return $blocks;
+	}
 
 	public function get(Request $request, $slug){
-		$user_id = Auth::user()->id;
+		//$user_id = Auth::user()->id;
+		$user_id=1;
 		$note = Note::with('blocks','references')->where('user_id',$user_id)->where('slug',$slug)->first();
+		$note->blocks = $this->setLevels($note->blocks);
+
 		if($note == null) {
 			$data = [
 				'user_id'=>Auth::user()->id,

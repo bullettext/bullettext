@@ -1,62 +1,46 @@
 <template>
-<div class="wrapper-app">
-	<nav v-if="isAuthenticated">
-		<div class="logo">Bullet</div>
-		<global-search />
-	</nav>
-	<aside v-if="isAuthenticated">
-		<router-link to="/">Dashboard</router-link>
-	</aside>
-	<main>
-		<router-view :key="$route.fullPath" />
-
-	</main>
-	<loader/>
-</div>
+	<div class="wrapper-app">
+		<main>
+			<router-view :key="fullPath" />
+		</main>
+		<loader/>
+	</div>
 </template>
 
 <script>
 
-
+import { onMounted, toRefs } from 'vue';
 import Loader from './components/Loader.vue';
-import GlobalSearch from './components/GlobalSearch.vue';
+import store from '@/store';
+import { useRoute } from 'vue-router';
 
 export default {
-	name: 'app',
 	components: {
 		Loader,
-		GlobalSearch
+		// GlobalSearch
 	},
-	data() {
+	// inject: ['store'],
+	setup(){
+		const route = useRoute();
+		onMounted(() => {
+			// var today = new Date();
+			// var dd = String(today.getDate()).padStart(2, '0');
+			// var mm = String(today.getMonth() + 1).padStart(2, '0');
+			// var yyyy = today.getFullYear();
+
+			// today = `${yyyy}-${mm}-${dd}`;
+			// if(this.$route.fullPath == '/') {
+			// 	this.$router.push(`/${today}`);
+			// }
+
+		});
+	const { loading } = toRefs(store.state);
 		return {
-
+			startLoading:store.startLoading,
+			loading,
+			fullPath: route.fullPath
+			//state:store.state,
 		}
-	},
-	computed:{
-		isAuthenticated:function(){
-			return this.$store.getters.isAuthenticated
-		},
-		editingBlockId(){
-			return this.$store.state.editingBlockId;
-		},
-	},
-	methods:{
-
-	},
-	created() {
-		var today = new Date();
-		var dd = String(today.getDate()).padStart(2, '0');
-		var mm = String(today.getMonth() + 1).padStart(2, '0');
-		var yyyy = today.getFullYear();
-
-		today = `${yyyy}-${mm}-${dd}`;
-		if(this.$route.fullPath == '/') {
-			this.$router.push(`/${today}`);
-		}
-	},
-
+	}
 }
-
-
-
 </script>

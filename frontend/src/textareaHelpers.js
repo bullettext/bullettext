@@ -195,16 +195,16 @@ window.setStrikeout = function(event) {
 	setTextFormat('~~', event);
 }
 
-window.setTodo = function(textareaDom) {
-	var text = textareaDom.value;
+// window.setTodo = function(textareaDom) {
+// 	var text = textareaDom.value;
 
-	if (!text.match(/^\[\[(TODO|DONE)\]\]/)) {
-		text = "[[TODO]] " + text;
-	} else if (text.match(/^\[\[TODO\]\]/)) {
-		text = text.replace(/^\[\[TODO\]\]/, "[[DONE]]");
-	} else if (text.match(/^\[\[DONE\]\]/)) {
-		text = text.replace(/^\[\[DONE\]\] */, "");
-	}
+// 	if (!text.match(/^\[\[(TODO|DONE)\]\]/)) {
+// 		text = "[[TODO]] " + text;
+// 	} else if (text.match(/^\[\[TODO\]\]/)) {
+// 		text = text.replace(/^\[\[TODO\]\]/, "[[DONE]]");
+// 	} else if (text.match(/^\[\[DONE\]\]/)) {
+// 		text = text.replace(/^\[\[DONE\]\] */, "");
+// 	}
 
-	textareaDom.value = text;
-}
+// 	textareaDom.value = text;
+// }
