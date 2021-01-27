@@ -47,8 +47,7 @@ class NoteController extends Controller
 	}
 
 	public function get(Request $request, $slug){
-		//$user_id = Auth::user()->id;
-		$user_id=1;
+		$user_id = Auth::user()->id;
 		$note = Note::with('blocks','references')->where('user_id',$user_id)->where('slug',$slug)->first();
 		$note->blocks = $this->setLevels($note->blocks);
 
