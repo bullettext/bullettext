@@ -8,6 +8,7 @@
 			@keydown="onKeydown"
 		/>
 		<p @click="onClickBlock(index,$event)" v-html="marked(block.text)"></p>
+		<context-menu :tecla="teclaMenu" />
 	</div>
 </template>
 <script>
@@ -15,9 +16,11 @@ import { ref, reactive, computed, onMounted, toRefs, nextTick } from 'vue';
 
 import store from '@/store';
 import {useRouter} from 'vue-router';
+import ContextMenu from './ContextMenu.vue';
 
 export default {
 	props: ["index", "block"],
+	components: { ContextMenu },
 	setup(props, context) {
 
 		const router = useRouter();
@@ -30,6 +33,7 @@ export default {
 				blocks: [],
 				references:[],
 			 },
+			 teclaMenu: null,
 			selectedIndex: computed(() => {
 				return store.state.selectedIndex;
 			}),
@@ -38,12 +42,56 @@ export default {
 			}),
 		});
 
+		// const teclaMenu = (tecla) => {
+		// 	console.log({tecla});
+		// };
+
 		const keyDownFunctions = {
 			CtrlEnter: (event) => {
 				setTodo();
 			},
-
+		  CtrlB: (event) => {
+				setBold(event);
+			},
+			CtrlI: (event) => {
+				setItalic(event);
+			},
+		  '[': (event) => {
+				addLetter(']');
+			},
+		  'Shift(': (event) => {
+				addLetter(')');
+			},
+		  '{': (event) => {
+				addLetter('}');
+			},
 		}
+
+		const addLetter = (letter) => {
+			const selectionStart = state.textareaDOM.selectionStart;
+			block.text = block.text.substring(0,selectionStart) +
+				letter +
+				block.text.substring(selectionStart);
+			state.textareaDOM.selectionStart = state.textareaDOM.selectionEnd = selectionStart;
+		}
+		const setTextFormat = (append, event) => {
+			const selectionStart = state.textareaDOM.selectionStart;
+			const selectionEnd = state.textareaDOM.selectionEnd;
+			const sizeAppend = append.length;
+			block.text = block.text.substring(0,selectionStart) + append + block.text.substring(selectionStart);
+			block.text = block.text.substring(0,selectionEnd+sizeAppend) + append + block.text.substring(selectionEnd+sizeAppend);
+			state.textareaDOM.selectionStart = selectionStart + sizeAppend;
+			state.textareaDOM.selectionEnd = selectionEnd + sizeAppend;
+			if(event) event.preventDefault();
+		}
+		const setBold = (event) => {
+			setTextFormat('**', event);
+		}
+
+		const setItalic = (event) => {
+			setTextFormat('*', event);
+		}
+
 
 		function cursorPosition(newval) {
 			if(!state.textareaDOM) return 0;
@@ -69,6 +117,7 @@ export default {
 			if(event.shiftKey) command += 'Shift';
 			if(event.altKey) command += 'Alt';
 			command += event.key;
+			state.teclaMenu = command;
 			if(typeof keyDownFunctions[command] === 'function'){
 				keyDownFunctions[command](event);
 			}
@@ -156,7 +205,7 @@ export default {
 			return text;
 		}
 
-		const {  selectedIndex } = toRefs( state );
+		const {  selectedIndex, teclaMenu } = toRefs( state );
 		const { textareaDOM } = toRefs(store.state);
 		return {
 			selectedIndex,
@@ -167,7 +216,8 @@ export default {
 			setInputHeight,
 			onKeydown,
 			block,
-			index
+			index,
+			teclaMenu
 		}
 	}
 };
