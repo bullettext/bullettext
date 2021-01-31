@@ -8,7 +8,7 @@
 			@keydown="onKeydown"
 		/>
 		<p @click="onClickBlock(index,$event)" v-html="marked(block.text)"></p>
-		<context-menu :tecla="teclaMenu" />
+		<context-menu v-if="menuPosition" :pos="menuPosition" :text="block.text" @close="closeMenu" />
 	</div>
 </template>
 <script>
@@ -33,7 +33,7 @@ export default {
 				blocks: [],
 				references:[],
 			 },
-			 teclaMenu: null,
+			 menuPosition:null,
 			selectedIndex: computed(() => {
 				return store.state.selectedIndex;
 			}),
@@ -41,10 +41,6 @@ export default {
 				return store.state.textareaDOM;
 			}),
 		});
-
-		// const teclaMenu = (tecla) => {
-		// 	console.log({tecla});
-		// };
 
 		const keyDownFunctions = {
 			CtrlEnter: (event) => {
@@ -56,6 +52,9 @@ export default {
 			CtrlI: (event) => {
 				setItalic(event);
 			},
+		  '/': (event) => {
+				state.menuPosition = cursorPosition();
+			},
 		  '[': (event) => {
 				addLetter(']');
 			},
@@ -65,6 +64,10 @@ export default {
 		  '{': (event) => {
 				addLetter('}');
 			},
+		}
+
+		const closeMenu = ()=>{
+			state.menuPosition = null;
 		}
 
 		const addLetter = (letter) => {
@@ -96,8 +99,7 @@ export default {
 		function cursorPosition(newval) {
 			if(!state.textareaDOM) return 0;
 			if(newval===undefined){
-				return
-			state.textareaDOM.selectionStart;
+				return state.textareaDOM.selectionStart;
 			}
 
 			state.textareaDOM.selectionStart = newval;
@@ -117,7 +119,12 @@ export default {
 			if(event.shiftKey) command += 'Shift';
 			if(event.altKey) command += 'Alt';
 			command += event.key;
-			state.teclaMenu = command;
+			console.log({command})
+
+			if(state.menuPosition) {
+				if(ContextMenu.onKeydown(command,event)===false) return;
+			}
+
 			if(typeof keyDownFunctions[command] === 'function'){
 				keyDownFunctions[command](event);
 			}
@@ -205,7 +212,8 @@ export default {
 			return text;
 		}
 
-		const {  selectedIndex, teclaMenu } = toRefs( state );
+
+		const {  selectedIndex,menuPosition } = toRefs( state );
 		const { textareaDOM } = toRefs(store.state);
 		return {
 			selectedIndex,
@@ -217,7 +225,8 @@ export default {
 			onKeydown,
 			block,
 			index,
-			teclaMenu
+			menuPosition,
+			closeMenu,
 		}
 	}
 };
