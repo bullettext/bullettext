@@ -1,9 +1,8 @@
 <template>
 
 
-	<div class="global-search">
-		<form @submit.prevent>
-			<input
+	<div class="global-search" :class="{active:menuOpen}">
+		<input
 			type="text"
 			v-model="searchterm"
 			@input="input"
@@ -11,8 +10,8 @@
 			@keyup.arrow-up="arrowUp"
 			@keyup.enter="enter"
 			@keyup.esc="searchterm = ''"
-			>
-		</form>
+			placeholder="Search or new"
+		>
 		<div class="menu-search" v-show="menuOpen">
 			<ul>
 				<li v-for="(note,index) in results" :class="{selected:index===selectedItem}"><a class="reference" :href="note.slug" @click.prevent="goto(note.slug)" v-html="hl(note.name)"></a></li>

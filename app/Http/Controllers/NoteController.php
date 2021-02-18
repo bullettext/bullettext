@@ -153,7 +153,7 @@ class NoteController extends Controller
 		if($note->user_id != Auth::user()->id) abort(403);
 		$input = $request->input();
 
-		$note->name = $input['name'];
+		$note->fill($input);
 
 		$note->save();
 		return $note;

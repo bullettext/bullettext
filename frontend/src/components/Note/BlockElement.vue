@@ -61,9 +61,6 @@ export default {
 		  'Shift(': (event) => {
 				addLetter(')');
 			},
-		  '{': (event) => {
-				addLetter('}');
-			},
 		}
 
 		const closeMenu = ()=>{
@@ -75,8 +72,11 @@ export default {
 			block.text = block.text.substring(0,selectionStart) +
 				letter +
 				block.text.substring(selectionStart);
-			state.textareaDOM.selectionStart = state.textareaDOM.selectionEnd = selectionStart;
+			nextTick(function() {
+				state.textareaDOM.selectionStart = state.textareaDOM.selectionEnd = selectionStart;
+			})
 		}
+
 		const setTextFormat = (append, event) => {
 			const selectionStart = state.textareaDOM.selectionStart;
 			const selectionEnd = state.textareaDOM.selectionEnd;
@@ -95,7 +95,6 @@ export default {
 			setTextFormat('*', event);
 		}
 
-
 		function cursorPosition(newval) {
 			if(!state.textareaDOM) return 0;
 			if(newval===undefined){
@@ -113,13 +112,13 @@ export default {
 			};
 		}
 		const onKeydown = (event) => {
-			console.log({onKeydown: event})
+			if(process.env.VUE_APP_VERBOSE) console.log({onKeydown: event})
 			let command = '';
 			if(event.ctrlKey) command += 'Ctrl';
 			if(event.shiftKey) command += 'Shift';
 			if(event.altKey) command += 'Alt';
 			command += event.key;
-			console.log({command})
+			if(process.env.VUE_APP_VERBOSE) console.log({command})
 
 			if(state.menuPosition) {
 				if(ContextMenu.onKeydown(command,event)===false) return;
@@ -131,7 +130,7 @@ export default {
 			context.emit('onKeydown', event);
 		}
 		const focusTextarea = (position) => {
-			console.log('position',position);
+			if(process.env.VUE_APP_VERBOSE) console.log('position',position);
 			nextTick(function() {
 				if(!state.textareaDOM){
 					console.error('Textarea not found');

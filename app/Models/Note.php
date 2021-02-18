@@ -19,6 +19,7 @@ class Note extends Model
 		'name',
 		'slug',
 		'user_id',
+		'is_favorite',
 	];
 
 

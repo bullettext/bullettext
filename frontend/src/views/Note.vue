@@ -1,21 +1,26 @@
 <template>
-	<div>
+	<div class="note">
 		<div class="container" v-if="note.id" :data-note="note.id">
 
-			<div class="info-saved">
-				<button class="btn btn-sm" :disabled="!canUndo" @click="undo()"><ico size="20" ico="undo" /></button>
-				<button class="btn btn-sm" :disabled="!canRedo" @click="redo()"><ico size="20" ico="redo" /></button>
+			<header>
 
-				<button class="btn btn-sm text-muted" v-show="!isSaving && !canSave" @click="saveAll" :title="infoSaved">Saved<span v-show="infoSaved"> on {{infoSaved}}</span></button>
-				<button class="btn btn-sm btn-primary" v-show="!isSaving && canSave" @click="saveAll">Save changes</button>
-				<button class="btn btn-sm" v-show="isSaving" disabled>Saving <ico size="20" ico="loading" class="spin" /></button>
-			</div>
+				<div class="info-saved">
+					<button :disabled="!canUndo" @click="undo()"><ico size="20" ico="undo" /></button>
+					<button :disabled="!canRedo" @click="redo()"><ico size="20" ico="redo" /></button>
 
+					<button class="info-msg" v-show="!isSaving && !canSave" @click="saveAll" :title="infoSaved">Saved<span v-show="infoSaved"> on {{infoSaved}}</span></button>
+					<button class="info-msg" v-show="!isSaving && canSave" @click="saveAll">Save changes</button>
+					<button class="info-msg" v-show="isSaving" disabled>Saving <ico size="20" ico="loading" class="spin" /></button>
+				</div>
 
-			<div class="my-3">
 				<h1>{{ note.name }}</h1>
-			</div>
-			<p>INDEX: {{selectedIndex}}</p>
+
+				<span @click="toggleFavorite" class="toggleFavorite">
+					<ico v-if="!note.is_favorite" ico="star-empty" size="20" />
+					<ico v-if="note.is_favorite" ico="star" size="20" />
+				</span>
+
+			</header>
 
 			<div class="blocks">
 				<block-element
@@ -26,6 +31,7 @@
 				@onKeydown="onKeydown"
 				/>
 			</div>
+
 			<list-references v-if="note.references.length" :references="note.references" />
 
 		</div>
@@ -142,7 +148,7 @@ export default {
 				focusTextarea(0);
 			},
 			Backspace: (event) => {
-				if(cursorPosition() !== 0) return;
+				if(state.textareaDOM.selectionEnd !== 0) return;
 				if(!state.previusBlock) return;
 				event.preventDefault();
 				const size = state.previusBlock.text.length;
@@ -168,9 +174,19 @@ export default {
 				store.state.selectedIndex++;
 				focusTextarea(0);
 			},
+			/*
+			Ctrlv: (event) =>{
+				const originalText = state.currentBlock.text;
+				setTimeout(()=>{
+					const newText = state.currentBlock.text;
+					let diff = newText.replace(originalText,'');
+					if(diff == newText) return;
 
+
+				},1)
+			}
+*/
 		};
-
 
 
 
@@ -198,6 +214,14 @@ export default {
 			var ss = ('0'+date.getSeconds()).substr(-2);
 			return `${hh}:${mm}:${ss}`;
 		});
+		const setEdited = (bool)=>{
+			if(bool == true && state.edited == true) return;
+			state.edited = bool;
+			if(bool == true){
+				clearTimeout(saveTimer);
+				saveTimer = setTimeout(()=>{ saveAll() },5000);
+			}
+		}
 
 		const undo = () =>{
 			if (!canUndo) return;
@@ -207,7 +231,7 @@ export default {
 				pushHistory();
 				state.historyCursor = currentCursor;
 				reloadPath(state.history[state.historyCursor]);
-				state.edited = false;
+				setEdited(false);
 				return;
 			}
 
@@ -220,10 +244,10 @@ export default {
 		}
 
 		const reloadPath = (output)=>{
-			console.log('reload',JSON.parse(output));
+			if(process.env.VUE_APP_VERBOSE) console.log('reload',JSON.parse(output));
 			state.note.blocks = JSON.parse(output);
 			state.version = new Date().getTime();
-			state.edited = true;
+			setEdited(true);
 		}
 
 
@@ -236,7 +260,7 @@ export default {
 		}
 
 		const pushHistory = ()=>{
-			console.log('pushHistory');
+			if(process.env.VUE_APP_VERBOSE)  console.log('pushHistory');
 			var output = JSON.stringify(state.note.blocks);
 			if (!state.historyDisabled && output !== state.history[state.historyCursor]) {
 				state.historyCursor ++;
@@ -254,7 +278,7 @@ export default {
 			state.textareaDOM.selectionEnd = newval;
 		}
 		const keyElement = (block,index) => {
-			const id = block.id ? `id-${block.id}` : `temp_id-${block.temp_id}`;
+			const id = block.temp_id ? `temp_id-${block.temp_id}` : `id-${block.id}`;
 			return `index-${index}-${id}-h${state.version}`;
 		}
 		const cursorOffset = () =>{
@@ -273,9 +297,8 @@ export default {
 			return lines.join("\n").length <= cursorPosition();
 		}
 		const onKeydown = (event) => {
-			state.edited = true;
-			clearTimeout(saveTimer);
-			saveTimer = setTimeout(()=>{ saveAll() },5000);
+			if(['Alt','Shift','Ctrl'].includes(event.key)) return;
+			setEdited(true);
 
 			let command = '';
 			if(event.ctrlKey) command += 'Ctrl';
@@ -283,7 +306,7 @@ export default {
 			if(event.altKey) command += 'Alt';
 			command += event.key;
 			if(typeof keyDownFunctions[command] === 'function'){
-				console.log(`Key down: ${command}\n---`);
+				if(process.env.VUE_APP_VERBOSE) console.log(`Key down: ${command}\n---`);
 				keyDownFunctions[command](event);
 			}
 		}
@@ -310,9 +333,9 @@ export default {
 			state.note.blocks.splice(index,0,block);
 		}
 		const focusTextarea = (position) => {
-			console.log('position',position);
+			if(process.env.VUE_APP_VERBOSE) console.log('position',position);
 			nextTick(function() {
-				console.log('textarea depois',state.textareaDOM);
+				if(process.env.VUE_APP_VERBOSE) console.log('textarea depois',state.textareaDOM);
 				state.textareaDOM.focus();
 				cursorPosition(position);
 				setInputHeight();
@@ -323,12 +346,24 @@ export default {
 			state.textareaDOM.style.height = `${state.textareaDOM.scrollHeight}px`;
 		}
 
+		const toggleFavorite = () => {
+			state.note.is_favorite = !state.note.is_favorite;
+			axios({
+				method:'post',
+				url:'/api/notes/'+state.note.id,
+				data:{is_favorite:state.note.is_favorite},
+			}).then(res=>{
+				store.getNotesIndex();
+			}).catch(res=>{
+				console.error(res);
+			});
+		}
+
 		const saveAll = () => {
-			console.log('saving');
 
 			clearTimeout(saveTimer);
 			state.lastSavedTime = 'Saving';
-			state.edited = false;
+			setEdited(false);
 
 
 			refactorOrderBlock();
@@ -338,24 +373,21 @@ export default {
 			let data = state.note.blocks;
 
 			let path = [];
-			//let counter = [];
 			data.forEach((block,index) => {
-				//set parent_id
 				path[block.level] = block.id || block.temp_id;
 				block.parent_id = block.level==0?null:path[block.level-1];
-
 				block.order = index;
 			});
-			console.log(data);
-			// addHistory(data);
+			if(process.env.VUE_APP_VERBOSE) console.log(data);
 
 			axios({
 				method:'post',
 				url:'/api/notes/save-blocks/'+note_id,
 				data:data,
 			}).then(res=>{
-				console.log(res);
+				if(process.env.VUE_APP_VERBOSE) console.log(res);
 				updateBlocksRefs(res.data.temp_ids);
+				// focusTextarea(state.textareaDOM.selectionStart);
 				pushHistory();
 				store.state.notes = [...res.data.new_notes, ...store.state.notes];
 				state.lastSavedTime = new Date();
@@ -369,8 +401,8 @@ export default {
 			for(var temp_id in data){
 				var block = state.note.blocks.find(block=>block.temp_id==temp_id);
 				block.id = data[temp_id];
-				block.temp_id = null;
-				console.log(`${temp_id} updated to id ${block.id}`);
+				// block.temp_id = null;
+				if(process.env.VUE_APP_VERBOSE) console.log(`${temp_id} updated to id ${block.id}`);
 			}
 		}
 
@@ -411,7 +443,6 @@ export default {
 		return {
 			note,
 			keyElement,
-			selectedIndex,
 			onKeydown,
 			saveAll,
 			infoSaved,
@@ -422,7 +453,8 @@ export default {
 			isSaving,
 			canSave,
 			history,
-			historyCursor
+			historyCursor,
+			toggleFavorite
 		}
 	}
 };

@@ -1,8 +1,6 @@
 <template>
 	<div class="wrapper-app">
-		<main>
-			<router-view :key="fullPath" />
-		</main>
+		<router-view :key="fullPath" />
 		<loader/>
 	</div>
 </template>
