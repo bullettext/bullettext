@@ -116,15 +116,20 @@ span.calculate #carret:after { content:' '; }
 	position: absolute;
 	background-color: #fff;
 	box-shadow: 1px 1px 3px rgba(20,20,20,0.4);
+	/* padding: 4px; */
+	z-index: 100;
+	/* outline: 1px solid red; */
 	transform: translateY(-4px);
 }
 
 .item {
 	padding: 4px 6px;
-	border: 1px solid #ccc;
+	border-top: 1px solid #ccc;
+	border-right: 1px solid #ccc;
+	border-left: 1px solid #ccc;
 }
 .item:last-child {
-	border: none
+	border-bottom: 1px solid #ccc;
 }
 
 .item.selected {

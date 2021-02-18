@@ -149,33 +149,33 @@ window.removeSlash = function() {
 	}
 }
 
-window.insertCurrentDate = function() {
-	const date = new Date();
-	const year = date.getFullYear();
-	const month = ('0'+(date.getMonth()+1)).substr(-2);
-	const day = ('0'+(date.getDate())).substr(-2);
-	const dateStr = `[[${year}-${month}-${day}]]`;
-	insertText(dateStr);
-}
+// window.insertCurrentDate = function() {
+// 	const date = new Date();
+// 	const year = date.getFullYear();
+// 	const month = ('0'+(date.getMonth()+1)).substr(-2);
+// 	const day = ('0'+(date.getDate())).substr(-2);
+// 	const dateStr = `[[${year}-${month}-${day}]]`;
+// 	insertText(dateStr);
+// }
 
-window.insertCurrentTime = function() {
-	const date = new Date();
-	const hours = ('0'+(date.getHours()+1)).substr(-2);
-	const minutes = ('0'+(date.getMinutes()+1)).substr(-2);
-	const timeStr = `${hours}:${minutes}`;
-	insertText(timeStr);
-}
+// window.insertCurrentTime = function() {
+// 	const date = new Date();
+// 	const hours = ('0'+(date.getHours()+1)).substr(-2);
+// 	const minutes = ('0'+(date.getMinutes()+1)).substr(-2);
+// 	const timeStr = `${hours}:${minutes}`;
+// 	insertText(timeStr);
+// }
 
 window.getIndexOfElement = function(element) {
 	return (Array.from(element.parentNode.children).indexOf(element) + 1);
 }
 
-window.insertText = function(text) {
-	const textarea = getTextarea();
-	const selectionStart = textarea.selectionStart;
-	textarea.value = textarea.value.substring(0,selectionStart) + text + textarea.value.substring(selectionStart);
-	textarea.selectionStart = textarea.selectionEnd = selectionStart + text.length;
-}
+// window.insertText = function(text) {
+// 	const textarea = getTextarea();
+// 	const selectionStart = textarea.selectionStart;
+// 	textarea.value = textarea.value.substring(0,selectionStart) + text + textarea.value.substring(selectionStart);
+// 	textarea.selectionStart = textarea.selectionEnd = selectionStart + text.length;
+// }
 
 window.getTextarea = function() {
 	const textarea = $('textarea');

@@ -8,7 +8,15 @@
 			@keydown="onKeydown"
 		/>
 		<p @click="onClickBlock(index,$event)" v-html="marked(block.text)"></p>
-		<context-menu v-if="menuPosition" :pos="menuPosition" :text="block.text" @close="closeMenu" />
+		<context-menu
+			v-if="menuPosition && selectedIndex === index"
+			:pos="menuPosition"
+			:text="block.text"
+			@action="callAction"
+			@close="closeMenu"
+			class="menu-context"
+			:style="styleMenu"
+		/>
 	</div>
 </template>
 <script>
@@ -95,6 +103,30 @@ export default {
 			setTextFormat('*', event);
 		}
 
+		const insertCurrentDate = (event) => {
+			const date = new Date();
+			const year = date.getFullYear();
+			const month = ('0'+(date.getMonth()+1)).substr(-2);
+			const day = ('0'+(date.getDate())).substr(-2);
+			const dateStr = `[[${year}-${month}-${day}]]`;
+			insertText(dateStr);
+		}
+
+		const insertCurrentTime = function() {
+			const date = new Date();
+			const hours = ('0'+(date.getHours()+1)).substr(-2);
+			const minutes = ('0'+(date.getMinutes()+1)).substr(-2);
+			const timeStr = `${hours}:${minutes}`;
+			insertText(timeStr);
+		}
+
+
+		const insertText = (text) => {
+			const selectionStart = state.textareaDOM.selectionStart;
+			state.currentBlock.value = state.currentBlock.text.substring(0,selectionStart) + text + state.currentBlock.substring(selectionStart);
+			state.textareaDOM.selectionStart = state.textareaDOM.selectionEnd = selectionStart + text.length;
+		}
+
 		function cursorPosition(newval) {
 			if(!state.textareaDOM) return 0;
 			if(newval===undefined){
@@ -111,6 +143,33 @@ export default {
 				marginLeft: `${20*level}px`
 			};
 		}
+
+		const callAction = (event) => {
+			console.log([event]);
+			if(event == 'setItalic') {
+				setItalic();
+			}
+			if(event == 'setBold') {
+				setItalic();
+			}
+			if(event == 'insertCurrentDate') {
+				insertCurrentDate();
+			}
+			if(event == 'insertCurrentTime') {
+				insertCurrentTime();
+			}
+			if(event == 'createMenuReference') {
+				createMenuReference();
+			}
+		}
+
+		const styleMenu = (level) => {
+			return 	{
+				top: `0px`,
+				left: `20px`
+			};
+		}
+
 		const onKeydown = (event) => {
 			if(process.env.VUE_APP_VERBOSE) console.log({onKeydown: event})
 			let command = '';
@@ -215,6 +274,7 @@ export default {
 		const {  selectedIndex,menuPosition } = toRefs( state );
 		const { textareaDOM } = toRefs(store.state);
 		return {
+			callAction,
 			selectedIndex,
 			styleBlock,
 			textareaDOM,
@@ -226,6 +286,7 @@ export default {
 			index,
 			menuPosition,
 			closeMenu,
+			styleMenu
 		}
 	}
 };
