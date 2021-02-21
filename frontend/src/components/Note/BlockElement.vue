@@ -9,9 +9,8 @@
 		/>
 		<p @click="onClickBlock(index,$event)" v-html="marked(block.text)"></p>
 		<context-menu
-			v-if="menuPosition && selectedIndex === index"
-			:pos="menuPosition"
-			:text="block.text"
+			v-if="menu.open && selectedIndex === index"
+			:isReference="menu.isReference"
 			@action="callAction"
 			@close="closeMenu"
 			class="menu-context"
@@ -41,13 +40,25 @@ export default {
 				blocks: [],
 				references:[],
 			 },
-			 menuPosition:null,
+			 menu: {
+				 active: false,
+				 top: 0,
+				 left: 0,
+				 position: 0
+			 },
 			selectedIndex: computed(() => {
 				return store.state.selectedIndex;
 			}),
 			textareaDOM: computed(() => {
 				return store.state.textareaDOM;
 			}),
+		});
+
+		const styleMenu = computed(() => {
+			return 	{
+				top: `${state.menu.top}px`,
+				left: `${state.menu.left}px`,
+			};
 		});
 
 		const keyDownFunctions = {
@@ -61,18 +72,43 @@ export default {
 				setItalic(event);
 			},
 		  '/': (event) => {
-				state.menuPosition = cursorPosition();
+				createMenu();
 			},
 		  '[': (event) => {
 				addLetter(']');
+				if(prevCharacter('[') && nextCharacter(']')) {
+					createMenu(true);
+				}
 			},
 		  'Shift(': (event) => {
 				addLetter(')');
 			},
 		}
 
+		const createMenu = (isReference) => {
+			const position = getCaretPosition();
+			state.menu.top = position.y;
+			state.menu.left = position.x;
+			state.menu.position = cursorPosition();
+			state.menu.open = true;
+			state.menu.isReference = (isReference || false);
+		}
+
+		const prevCharacter = (letter) => {
+			const textarea = state.textareaDOM;
+			const selectionStart = textarea.selectionStart;
+			let prevCharacter = block.text.substring(selectionStart-1,selectionStart);
+			return letter == prevCharacter;
+		}
+		const nextCharacter = (letter) => {
+			const textarea = state.textareaDOM;
+			const selectionEnd = textarea.selectionEnd;
+			let nextCharacter = block.text.substring(selectionEnd,selectionEnd+1);
+			return letter == nextCharacter;
+		}
+
 		const closeMenu = ()=>{
-			state.menuPosition = null;
+				state.menu.open = false;
 		}
 
 		const addLetter = (letter) => {
@@ -103,13 +139,13 @@ export default {
 			setTextFormat('*', event);
 		}
 
-		const insertCurrentDate = (event) => {
+		const insertCurrentDate = () => {
 			const date = new Date();
 			const year = date.getFullYear();
 			const month = ('0'+(date.getMonth()+1)).substr(-2);
 			const day = ('0'+(date.getDate())).substr(-2);
 			const dateStr = `[[${year}-${month}-${day}]]`;
-			insertText(dateStr);
+			addLetter(dateStr);
 		}
 
 		const insertCurrentTime = function() {
@@ -117,17 +153,15 @@ export default {
 			const hours = ('0'+(date.getHours()+1)).substr(-2);
 			const minutes = ('0'+(date.getMinutes()+1)).substr(-2);
 			const timeStr = `${hours}:${minutes}`;
-			insertText(timeStr);
+			addLetter(timeStr);
 		}
 
-
-		const insertText = (text) => {
-			const selectionStart = state.textareaDOM.selectionStart;
-			state.currentBlock.value = state.currentBlock.text.substring(0,selectionStart) + text + state.currentBlock.substring(selectionStart);
-			state.textareaDOM.selectionStart = state.textareaDOM.selectionEnd = selectionStart + text.length;
+		const datepiker = function() {
+			alert('Not implemented');
 		}
 
-		function cursorPosition(newval) {
+		const cursorPosition = (newval) => {
+			console.log(state.textareaDOM);
 			if(!state.textareaDOM) return 0;
 			if(newval===undefined){
 				return state.textareaDOM.selectionStart;
@@ -145,29 +179,40 @@ export default {
 		}
 
 		const callAction = (event) => {
-			console.log([event]);
-			if(event == 'setItalic') {
-				setItalic();
-			}
-			if(event == 'setBold') {
-				setItalic();
-			}
-			if(event == 'insertCurrentDate') {
-				insertCurrentDate();
-			}
-			if(event == 'insertCurrentTime') {
-				insertCurrentTime();
-			}
-			if(event == 'createMenuReference') {
-				createMenuReference();
-			}
-		}
-
-		const styleMenu = (level) => {
-			return 	{
-				top: `0px`,
-				left: `20px`
-			};
+			const action = event.action;
+			const params = event.params || {};
+			console.log({action, params});
+			focusTextarea(state.menu.position);
+			nextTick(function() {
+				if(action == 'setItalic') {
+					setItalic();
+				}
+				if(action == 'setBold') {
+					setBold();
+				}
+				if(action == 'insertCurrentDate') {
+					insertCurrentDate();
+				}
+				if(action == 'insertCurrentTime') {
+					insertCurrentTime();
+				}
+				if(action == 'createMenuReference') {
+					createMenu();
+				}
+				if(action == 'reference') {
+					console.log('entrou');
+					addLetter(params.text);
+				}
+				if(action == 'datepiker') {
+					datepiker();
+				}
+				if(action == 'insertTodo') {
+					setTodo();
+				}
+				if(action == 'write') {
+					addLetter(params.text);
+				}
+			})
 		}
 
 		const onKeydown = (event) => {
@@ -179,9 +224,7 @@ export default {
 			command += event.key;
 			if(process.env.VUE_APP_VERBOSE) console.log({command})
 
-			if(state.menuPosition) {
-				if(ContextMenu.onKeydown(command,event)===false) return;
-			}
+			if(state.menu.open) { return false; }
 
 			if(typeof keyDownFunctions[command] === 'function'){
 				keyDownFunctions[command](event);
@@ -201,11 +244,30 @@ export default {
 			});
 		}
 		const setInputHeight = () => {
-
 			state.textareaDOM.style.height = "1.5em";
+			state.textareaDOM.style.height = `${state.textareaDOM.scrollHeight}px`;
+		}
+		const getCaretPosition = () => {
+			const textarea = state.textareaDOM;
+			var span = document.createElement('span');
+			span.className = 'calculate';
+			var text = state.textareaDOM.value.substr(0,textareaDOM.selectionStart);
+			span.innerHTML = text + '<span id="caret"></span>';
+			span.style.width = state.textareaDOM.offsetWidth+'px';
 
-			state.textareaDOM.style.height = `${
-			state.textareaDOM.scrollHeight}px`;
+			document.body.appendChild(span);
+
+			var caret = span.querySelector('#caret');
+			var ret = {
+				x:caret.offsetLeft+4,
+				y:caret.offsetTop,
+			}
+
+			document.querySelectorAll('.calculate').forEach(span=>{
+				span.parentNode.removeChild(span);
+			});
+
+			return ret;
 		}
 		const selectBlock = (index) => {
 			store.state.selectedIndex = index;
@@ -271,9 +333,10 @@ export default {
 		}
 
 
-		const {  selectedIndex,menuPosition } = toRefs( state );
+		const {  selectedIndex, menu } = toRefs( state );
 		const { textareaDOM } = toRefs(store.state);
 		return {
+			menu,
 			callAction,
 			selectedIndex,
 			styleBlock,
@@ -284,7 +347,6 @@ export default {
 			onKeydown,
 			block,
 			index,
-			menuPosition,
 			closeMenu,
 			styleMenu
 		}

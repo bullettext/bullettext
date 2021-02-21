@@ -1,29 +1,25 @@
 <template>
 	<div>
-		<input type="text" v-model="search" ref="searchDOM"
+		<input type="text" v-model="searchTerm" ref="searchDOM"
 			@keyup.arrow-down="arrowDown"
 			@keyup.arrow-up="arrowUp"
-			@keyup.enter="enter"
-			@keyup.esc="closeMenu"
+			@keyup.enter="selectItem"
+			@keyup.esc="esc"
 		/>
-		<div class="item"	@click="enter" :class="{'selected': index == selectedIndex}" v-for="(item, index) in listMenu" :key="index">
-			{{item.text}}
-		</div>
+		<div
+			class="item"
+			:class="{'selected': index == selectedIndex}"
+			v-html="text(item.text)"
+			@click="selectItem"
+			v-for="(item, index) in listMenu"
+			:key="index"
+		/>
 	</div>
 </template>
 <script>
 
+import store from '@/store';
 import { reactive, toRefs, nextTick, onMounted, computed } from 'vue';
-
-const state = reactive({
-	selectedIndex:0,
-	searchTerm: '',
-	searchDOM: null,
-	listMenu: computed(() => {
-		return defaultListMenu;
-	})
-});
-
 
 const defaultListMenu = [
 	{ text: 'Todo', function: 'insertTodo' },
@@ -33,42 +29,71 @@ const defaultListMenu = [
 	{ text: 'Make a Reference', function: 'createMenuReference' },
 	{ text: 'Bold', function: 'setBold' },
 	{ text: 'Italic', function: 'setItalic' },
-	// { text: 'Strikeout', function: 'setStrikeout' },
 ];
-
-const arrowDown = ()=>{
-	state.selectedIndex++;
-};
-const arrowUp = ()=>{
-	state.selectedIndex--;
-};
-
-
 
 export default {
 	props: {
-		pos:{
-			type:Number,
-			required:true,
-		},
-		text:{
-			type:String,
-		}
-	},
-	onKeydown(command,event){
-		if(typeof keyDownFunctions[command] === 'function'){
-			return keyDownFunctions[command](event);
-		}
-		return true;
+		isReference: { type: Boolean },
 	},
 
 	setup(props, {emit}){
-		const enter = (event)=>{
+		const state = reactive({
+			selectedIndex:0,
+			searchTerm: '',
+			searchDOM: null,
+			listMenu: computed(() => {
+				let list = [];
+				if(props.isReference) {
+					store.state.notes.forEach((note) => {
+						list.push({
+							text: note.name
+						});
+					});
+				} else {
+					list = defaultListMenu;
+				}
+				let term = state.searchTerm.replace(/[[/]/,'').toLowerCase().trim();
+
+				console.log(term);
+				if(term == "") return list;
+				return list.filter(item=>{
+					return item.text.toLowerCase().includes(term);
+				}).slice(0,10);
+			})
+		});
+
+		const arrowDown = ()=>{
+			state.selectedIndex++;
+		};
+		const arrowUp = ()=>{
+			state.selectedIndex--;
+		};
+
+		const text = (text) => {
+			if(!state.searchTerm) return text;
+			const term = state.searchTerm.replace(/[[/]/,'');
+			return text.replace(new RegExp('/?('+term+')','i'),'<strong>$1</strong>');
+		}
+
+		const selectItem = (event)=>{
 			closeMenu();
-			emit('action',state.listMenu[state.selectedIndex].function);
+			if(props.isReference) {
+				let func =  {action: 'reference', params: {text: state.searchTerm}}
+				if(state.listMenu.length > 0) {
+					func.params = '['+state.listMenu[state.selectedIndex].text;
+				}
+				emit('action', func);
+			} else {
+				emit('action', {action: state.listMenu[state.selectedIndex].function });
+			}
 			event.preventDefault();
 			return false;
 		};
+
+		const esc = () => {
+			emit('action', {action: 'write', params: {text: searchTerm.value}});
+			closeMenu();
+		}
 
 		const closeMenu = ()=>{
 			emit('close');
@@ -76,20 +101,24 @@ export default {
 
 		onMounted(() => {
 			state.selectedIndex = 0;
+			state.searchTerm = "";
 			nextTick(function() {
 				state.searchDOM.focus();
 			});
 		});
 		const { searchTerm, searchDOM, selectedIndex, listMenu } = toRefs(state);
 		return {
+			esc,
+			isReference: props.isReference,
 			closeMenu,
 			searchTerm,
 			searchDOM,
 			selectedIndex,
 			arrowDown,
 			arrowUp,
-			enter,
-			listMenu
+			selectItem,
+			listMenu,
+			text
 		}
 
 	}
