@@ -54,8 +54,7 @@ export default {
 				}
 				let term = state.searchTerm.replace(/[[/]/,'').toLowerCase().trim();
 
-				console.log(term);
-				if(term == "") return list;
+				if(term == "") return list.slice(0,10);
 				return list.filter(item=>{
 					return item.text.toLowerCase().includes(term);
 				}).slice(0,10);
@@ -80,7 +79,7 @@ export default {
 			if(props.isReference) {
 				let func =  {action: 'reference', params: {text: state.searchTerm}}
 				if(state.listMenu.length > 0) {
-					func.params = '['+state.listMenu[state.selectedIndex].text;
+					func.params.text = state.listMenu[state.selectedIndex].text;
 				}
 				emit('action', func);
 			} else {
@@ -91,7 +90,8 @@ export default {
 		};
 
 		const esc = () => {
-			emit('action', {action: 'write', params: {text: searchTerm.value}});
+			let text = ( props.isReference ? '[' : '/') + searchTerm.value;
+			emit('action', {action: 'write', params: {text}});
 			closeMenu();
 		}
 

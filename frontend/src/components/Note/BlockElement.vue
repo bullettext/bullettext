@@ -73,15 +73,17 @@ export default {
 			},
 		  '/': (event) => {
 				createMenu();
+				event.preventDefault();
 			},
 		  '[': (event) => {
-				addLetter(']');
-				if(prevCharacter('[') && nextCharacter(']')) {
+				addText(']');
+				if(prevText('[') && nextText(']')) {
 					createMenu(true);
+					event.preventDefault();
 				}
 			},
 		  'Shift(': (event) => {
-				addLetter(')');
+				addText(')');
 			},
 		}
 
@@ -94,24 +96,24 @@ export default {
 			state.menu.isReference = (isReference || false);
 		}
 
-		const prevCharacter = (letter) => {
+		const prevText = (text) => {
 			const textarea = state.textareaDOM;
 			const selectionStart = textarea.selectionStart;
-			let prevCharacter = block.text.substring(selectionStart-1,selectionStart);
-			return letter == prevCharacter;
+			let prevText = block.text.substring(selectionStart- text.length,selectionStart);
+			return text == prevText;
 		}
-		const nextCharacter = (letter) => {
+		const nextText = (text) => {
 			const textarea = state.textareaDOM;
 			const selectionEnd = textarea.selectionEnd;
-			let nextCharacter = block.text.substring(selectionEnd,selectionEnd+1);
-			return letter == nextCharacter;
+			let nextText = block.text.substring(selectionEnd,selectionEnd + text.length);
+			return text == nextText;
 		}
 
 		const closeMenu = ()=>{
 				state.menu.open = false;
 		}
 
-		const addLetter = (letter) => {
+		const addText = (letter) => {
 			const selectionStart = state.textareaDOM.selectionStart;
 			block.text = block.text.substring(0,selectionStart) +
 				letter +
@@ -145,7 +147,7 @@ export default {
 			const month = ('0'+(date.getMonth()+1)).substr(-2);
 			const day = ('0'+(date.getDate())).substr(-2);
 			const dateStr = `[[${year}-${month}-${day}]]`;
-			addLetter(dateStr);
+			addText(dateStr);
 		}
 
 		const insertCurrentTime = function() {
@@ -153,7 +155,7 @@ export default {
 			const hours = ('0'+(date.getHours()+1)).substr(-2);
 			const minutes = ('0'+(date.getMinutes()+1)).substr(-2);
 			const timeStr = `${hours}:${minutes}`;
-			addLetter(timeStr);
+			addText(timeStr);
 		}
 
 		const datepiker = function() {
@@ -161,15 +163,15 @@ export default {
 		}
 
 		const cursorPosition = (newval) => {
-			console.log(state.textareaDOM);
 			if(!state.textareaDOM) return 0;
 			if(newval===undefined){
 				return state.textareaDOM.selectionStart;
 			}
-
-			state.textareaDOM.selectionStart = newval;
-
-			state.textareaDOM.selectionEnd = newval;
+			nextTick(function() {
+				console.log(newval);
+				state.textareaDOM.selectionStart = newval;
+				state.textareaDOM.selectionEnd = newval;
+			});
 		}
 
 		const styleBlock = (level) => {
@@ -197,11 +199,25 @@ export default {
 					insertCurrentTime();
 				}
 				if(action == 'createMenuReference') {
-					createMenu();
+					createMenu(true);
 				}
 				if(action == 'reference') {
 					console.log('entrou');
-					addLetter(params.text);
+					console.log(params);
+					let text = params.text;
+					if(!prevText('[[')) {
+						if(!prevText('[')) {
+							text = '[[' + text;
+						} else {
+							text = '[' + text;
+						}
+					}
+					let position = state.menu.position + text.length + 2;
+					if(!nextText(']]')) {
+						text = text + ']]';
+					}
+					addText(text);
+					cursorPosition(position);
 				}
 				if(action == 'datepiker') {
 					datepiker();
@@ -210,7 +226,8 @@ export default {
 					setTodo();
 				}
 				if(action == 'write') {
-					addLetter(params.text);
+					addText(params.text);
+					cursorPosition(state.menu.position + params.text.length);
 				}
 			})
 		}
@@ -248,18 +265,17 @@ export default {
 			state.textareaDOM.style.height = `${state.textareaDOM.scrollHeight}px`;
 		}
 		const getCaretPosition = () => {
-			const textarea = state.textareaDOM;
-			var span = document.createElement('span');
+			const span = document.createElement('span');
 			span.className = 'calculate';
-			var text = state.textareaDOM.value.substr(0,textareaDOM.selectionStart);
+			const text = state.textareaDOM.value.substr(0,state.textareaDOM.selectionStart);
 			span.innerHTML = text + '<span id="caret"></span>';
 			span.style.width = state.textareaDOM.offsetWidth+'px';
 
 			document.body.appendChild(span);
 
-			var caret = span.querySelector('#caret');
-			var ret = {
-				x:caret.offsetLeft+4,
+			const caret = span.querySelector('#caret');
+			const ret = {
+				x:caret.offsetLeft,
 				y:caret.offsetTop,
 			}
 
